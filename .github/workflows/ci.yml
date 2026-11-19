@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      evals:
+        description: Also run the paid eval suites (needs the ANTHROPIC_API_KEY secret)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so a Claude Code release can't silently change what "valid" means. Bump on purpose.
+  CLAUDE_CODE_VERSION: 2.1.328
+
+jobs:
+  install-test:
+    name: validate + install core (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@${{ env.CLAUDE_CODE_VERSION }}
+      - name: Claude Code version
+        run: claude --version
+      - name: Validate marketplace and every plugin manifest
+        shell: bash
+        run: |
+          claude plugin validate .
+          for p in plugins/*/; do claude plugin validate "$p"; done
+      - name: Repo rules (pins, reviews, skill frontmatter, eval coverage)
+        run: node scripts/ci-check.mjs
+      - name: Install core into an empty project, check the exact skill set, uninstall, check git diff is empty
+        run: node scripts/install-test.mjs core
+
+  evals:
+    name: evals (${{ matrix.plugin }})
+    if: github.event_name == 'workflow_dispatch' && inputs.evals
+    needs: install-test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [craft-core, craft-web, oss, writing]
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code@${{ env.CLAUDE_CODE_VERSION }}
+      - name: Linux sandbox deps for eval runs
+        run: sudo apt-get install -y bubblewrap socat
+      - name: Check the secret exists
+        run: test -n "$ANTHROPIC_API_KEY" || { echo "::error::Add an ANTHROPIC_API_KEY repository secret to run evals"; exit 1; }
+      - name: Trigger and no-trigger cases
+        run: claude plugin eval plugins/${{ matrix.plugin }} --tag trigger no-trigger --ablation none --runs 3 -j 4 --trust-plugin --no-publish --threshold 0.66 --max-cost-usd 8 --json trigger.json
+      - name: Task cases, with and without the plugin
+        if: always()
+        run: claude plugin eval plugins/${{ matrix.plugin }} --tag task --ablation with-without --runs 3 -j 4 --trust-plugin --no-publish --threshold 0.6 --max-cost-usd 8 --json task.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evals-${{ matrix.plugin }}
+          path: |
+            trigger.json
+            task.json
+            plugins/${{ matrix.plugin }}/evals/results/

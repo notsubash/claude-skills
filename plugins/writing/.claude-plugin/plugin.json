@@ -1,0 +1,8 @@
+{
+  "name": "writing",
+  "description": "Writing in your own voice, and a figure check for every number you publish.",
+  "author": { "name": "Subash Pandey", "url": "https://github.com/notsubash" },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": ["craft", "bundle"]
+}

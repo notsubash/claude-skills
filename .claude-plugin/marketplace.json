@@ -1,0 +1,188 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "craft",
+  "description": "Personal Claude Code skills: my own bundles plus third-party skills pinned to reviewed commits.",
+  "owner": {
+    "name": "Subash Pandey",
+    "url": "https://github.com/notsubash"
+  },
+  "plugins": [
+    {
+      "name": "core",
+      "source": "./plugins/core",
+      "description": "Bundle for every project: craft-core (senior PRs, project docs, security gate, deepen hook) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
+      "category": "bundle"
+    },
+    {
+      "name": "craft-core",
+      "source": "./plugins/craft-core",
+      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, deepen (+ first-prompt hook, push guard).",
+      "category": "own"
+    },
+    {
+      "name": "web",
+      "source": "./plugins/web",
+      "description": "Bundle for UI/UX: craft-web (ui-pipeline) plus impeccable, stageshow, charles-unslop/polish, Emil Kowalski and Playwright.",
+      "category": "bundle"
+    },
+    {
+      "name": "craft-web",
+      "source": "./plugins/craft-web",
+      "description": "My own UI skill, no dependencies: ui-pipeline.",
+      "category": "own"
+    },
+    {
+      "name": "security",
+      "source": "./plugins/security",
+      "description": "Heavy security engines the core security gate can call: Anthropic's security-guidance hooks and Cloudflare's security-audit skill.",
+      "category": "bundle"
+    },
+    {
+      "name": "oss",
+      "source": "./plugins/oss",
+      "description": "Open-source contribution flow and a merged-PR portfolio sync.",
+      "category": "own"
+    },
+    {
+      "name": "writing",
+      "source": "./plugins/writing",
+      "description": "Writing in your own voice, and a figure check that recomputes every number you publish.",
+      "category": "own"
+    },
+    {
+      "name": "superpowers",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/obra/superpowers.git",
+        "sha": "22f0b463e7a5e579904dd6211a520321035526f7"
+      },
+      "description": "Third-party (obra/superpowers, MIT). Brainstorming, plans, TDD, debugging, subagent-driven development. Review: third_party/REVIEW.md#superpowers",
+      "category": "third-party"
+    },
+    {
+      "name": "matt-eng",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/mattpocock/skills.git",
+        "path": "skills",
+        "sha": "5863806dd4e15c63174bee4e7515a4256792ecfa"
+      },
+      "strict": false,
+      "skills": [
+        "./engineering/grill-with-docs",
+        "./productivity/grilling",
+        "./engineering/domain-modeling",
+        "./engineering/codebase-design",
+        "./engineering/to-spec",
+        "./engineering/to-tickets",
+        "./engineering/improve-codebase-architecture",
+        "./engineering/setup-matt-pocock-skills"
+      ],
+      "description": "Third-party (mattpocock/skills, MIT), a subset: grill-with-docs, grilling, domain modeling (DDD), codebase design, spec and tickets. Review: third_party/REVIEW.md#matt-eng",
+      "category": "third-party"
+    },
+    {
+      "name": "ponytail",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/DietrichGebert/ponytail.git",
+        "sha": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+      },
+      "description": "Third-party (DietrichGebert/ponytail, MIT). Simplest-solution mode: YAGNI, stdlib first. Has hooks. Review: third_party/REVIEW.md#ponytail",
+      "category": "third-party"
+    },
+    {
+      "name": "security-guidance",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/security-guidance",
+        "sha": "df9699a55c56707e9948a32951ea356638ea8519"
+      },
+      "description": "Third-party (Anthropic, Apache-2.0). Pattern warnings on edits plus LLM diff and commit review. Has hooks, network and a pip install. Review: third_party/REVIEW.md#security-guidance",
+      "category": "third-party"
+    },
+    {
+      "name": "security-audit",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/cloudflare/security-audit-skill.git",
+        "path": "skills/security-audit",
+        "sha": "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"
+      },
+      "description": "Third-party (Cloudflare, MIT). Evidence-driven security audit with a findings schema and validators. Review: third_party/REVIEW.md#security-audit",
+      "category": "third-party"
+    },
+    {
+      "name": "skill-creator",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/anthropics/claude-plugins-official.git",
+        "path": "plugins/skill-creator",
+        "sha": "df9699a55c56707e9948a32951ea356638ea8519"
+      },
+      "description": "Third-party (Anthropic, Apache-2.0). Create skills and run the description and eval loop. Review: third_party/REVIEW.md#skill-creator",
+      "category": "third-party"
+    },
+    {
+      "name": "playwright-cli",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/microsoft/playwright-cli.git",
+        "path": "skills/playwright-cli",
+        "sha": "c872a33cec77fa03c28fa7c6d1ad99d15d04ce42"
+      },
+      "description": "Third-party (Microsoft, Apache-2.0). Drive a real browser from the shell for UI testing. Needs `npm i -g @playwright/cli`. Review: third_party/REVIEW.md#playwright-cli",
+      "category": "third-party"
+    },
+    {
+      "name": "impeccable",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/pbakaus/impeccable.git",
+        "path": "plugin",
+        "sha": "b49177d32788f2dc585c42831d845dacf1ebed2c"
+      },
+      "description": "Third-party (Paul Bakaus, Apache-2.0). Design fluency and anti-pattern detection. Its hooks download a checksum-verified engine binary. Review: third_party/REVIEW.md#impeccable",
+      "category": "third-party"
+    },
+    {
+      "name": "stageshow",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/benjitaylor/skills.git",
+        "path": "stageshow",
+        "sha": "299140fafd08df55a9c234e610c3f64af3f45531"
+      },
+      "description": "Third-party (Benji Taylor, MIT). Faux product UI and cursor demos in React and CSS. Review: third_party/REVIEW.md#stageshow",
+      "category": "third-party"
+    },
+    {
+      "name": "charles-design",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/LemonFace0309/charles-skills.git",
+        "path": "skills/design",
+        "sha": "baf4272436fb65bc83e01e15b7d95755488d92ee"
+      },
+      "strict": false,
+      "skills": [
+        "./charles-unslop",
+        "./charles-polish"
+      ],
+      "description": "Third-party (LemonFace0309/charles-skills; MIT repo, charles-unslop is CC-BY-4.0). Unslop and polish. Review: third_party/REVIEW.md#charles-design",
+      "category": "third-party"
+    },
+    {
+      "name": "emil-design-eng",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/emilkowalski/skills.git",
+        "path": "skills/emil-design-eng",
+        "sha": "64eb3deb9a5fbfa041faf783e0bc3fd635872e9c"
+      },
+      "description": "Third-party (Emil Kowalski, MIT). Design engineering principles for UI polish and motion. Review: third_party/REVIEW.md#emil-design-eng",
+      "category": "third-party"
+    }
+  ]
+}

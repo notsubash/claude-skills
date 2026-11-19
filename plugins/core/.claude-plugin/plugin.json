@@ -1,0 +1,20 @@
+{
+  "name": "core",
+  "description": "Bundle for every project: craft-core plus superpowers, Matt Pocock's planning and DDD skills, and ponytail.",
+  "author": {
+    "name": "Subash Pandey",
+    "url": "https://github.com/notsubash"
+  },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "craft",
+    "bundle"
+  ],
+  "dependencies": [
+    "craft-core",
+    "superpowers",
+    "matt-eng",
+    "ponytail"
+  ]
+}

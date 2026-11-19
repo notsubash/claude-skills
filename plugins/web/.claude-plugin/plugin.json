@@ -1,0 +1,22 @@
+{
+  "name": "web",
+  "description": "Bundle for UI/UX work: craft-web plus impeccable, stageshow, charles-design, emil-design-eng and playwright-cli.",
+  "author": {
+    "name": "Subash Pandey",
+    "url": "https://github.com/notsubash"
+  },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "craft",
+    "bundle"
+  ],
+  "dependencies": [
+    "craft-web",
+    "impeccable",
+    "stageshow",
+    "charles-design",
+    "emil-design-eng",
+    "playwright-cli"
+  ]
+}

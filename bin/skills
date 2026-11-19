@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# bash/zsh shim: add this repo's bin/ to PATH, then run `skills ...`
+exec node "$(dirname "$0")/../cli/skills.mjs" "$@"

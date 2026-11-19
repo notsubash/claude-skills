@@ -1,0 +1,13 @@
+{
+  "name": "craft-core",
+  "description": "My own core skills and hooks: senior-pr, security-gate, project-docs, deepen. No dependencies.",
+  "author": {
+    "name": "Subash Pandey",
+    "url": "https://github.com/notsubash"
+  },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "craft"
+  ]
+}

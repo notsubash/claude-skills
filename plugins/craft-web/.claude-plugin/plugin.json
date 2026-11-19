@@ -1,0 +1,13 @@
+{
+  "name": "craft-web",
+  "description": "My own UI skill: ui-pipeline. No dependencies.",
+  "author": {
+    "name": "Subash Pandey",
+    "url": "https://github.com/notsubash"
+  },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "craft"
+  ]
+}

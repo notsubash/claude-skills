@@ -1,0 +1,4 @@
+**/evals/results/
+.claude/security-gate/
+node_modules/
+third_party/reviews/

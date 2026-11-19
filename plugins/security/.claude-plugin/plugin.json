@@ -1,0 +1,9 @@
+{
+  "name": "security",
+  "description": "Security engines for the core security gate: Anthropic security-guidance and Cloudflare security-audit.",
+  "author": { "name": "Subash Pandey", "url": "https://github.com/notsubash" },
+  "repository": "https://github.com/notsubash/claude-skills",
+  "license": "MIT",
+  "keywords": ["craft", "bundle"],
+  "dependencies": ["security-guidance", "security-audit"]
+}
