@@ -8,7 +8,7 @@ Everything works in PowerShell and in bash.
 
 | Bundle | You get | Install |
 |---|---|---|
-| **core** | `craft-core` (senior-pr, security-gate, project-docs, deepen + the first-prompt hook and the push guard), [superpowers](https://github.com/obra/superpowers), [Matt Pocock's](https://github.com/mattpocock/skills) grill-with-docs / grilling / domain-modeling / codebase-design / to-spec / to-tickets, and [ponytail](https://github.com/DietrichGebert/ponytail) | `skills add core` |
+| **core** | `craft-core` (senior-pr, security-gate, project-docs, product-lens, deepen + the first-prompt hook and the push guard), [superpowers](https://github.com/obra/superpowers), [Matt Pocock's](https://github.com/mattpocock/skills) grill-with-docs / grilling / domain-modeling / codebase-design / to-spec / to-tickets, and [ponytail](https://github.com/DietrichGebert/ponytail) | `skills add core` |
 | **web** | `craft-web` (ui-pipeline), [stageshow](https://github.com/benjitaylor/skills), [charles-unslop and charles-polish](https://github.com/LemonFace0309/charles-skills), [emil-design-eng](https://github.com/emilkowalski/skills), [playwright-cli](https://github.com/microsoft/playwright-cli). [impeccable](https://github.com/pbakaus/impeccable) is opt-in, see below | `skills add web` |
 | **security** | Anthropic's [security-guidance](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance) hooks and Cloudflare's [security-audit](https://github.com/cloudflare/security-audit-skill) | `skills add security` |
 | **oss** | oss-contribute, oss-portfolio | `skills add oss` |
@@ -19,11 +19,12 @@ Everything works in PowerShell and in bash.
 ### The workflow these encode
 
 1. **Think:** the `deepen` hook rewrites your first prompt of each session into a deeper one and waits for your OK. Then `grill-with-docs` interviews you and records ADRs and a glossary.
-2. **Document:** `project-docs` sets up a lean CLAUDE.md, PRODUCT.md, decision log, ADRs and backlog.
-3. **Plan:** superpowers `brainstorming`, then `writing-plans`, or Matt's `to-spec` and `to-tickets`.
-4. **Build:** superpowers `test-driven-development` and `subagent-driven-development`, `domain-modeling` and `codebase-design` for DDD and deep modules, and ponytail to keep it simple.
-5. **UI:** `ui-pipeline` runs impeccable (when installed; otherwise a built-in critique), then stageshow, then charles-unslop, then emil-design-eng, verified with playwright-cli screenshots.
-6. **Ship:** `security-gate` writes a CLEARED or BLOCKED report, the push guard checks it on `git push` and `gh pr create`, and `senior-pr` writes the commits and PR.
+2. **Decide what to build:** `product-lens` checks evidence versus assumptions, the user and the job, the riskiest assumption and a cheap test, one metric with a baseline and target, and the smallest scope, then makes a build, test-first or don't-build call.
+3. **Document:** `project-docs` sets up a lean CLAUDE.md, PRODUCT.md, decision log, ADRs and backlog.
+4. **Plan:** superpowers `brainstorming`, then `writing-plans`, or Matt's `to-spec` and `to-tickets`.
+5. **Build:** superpowers `test-driven-development` and `subagent-driven-development`, `domain-modeling` and `codebase-design` for DDD and deep modules, and ponytail to keep it simple.
+6. **UI:** `ui-pipeline` runs impeccable (when installed; otherwise a built-in critique), then stageshow, then charles-unslop, then emil-design-eng, verified with playwright-cli screenshots.
+7. **Ship:** `security-gate` writes a CLEARED or BLOCKED report, the push guard checks it on `git push` and `gh pr create`, and `senior-pr` writes the commits and PR.
 
 ## Set up the CLI (once)
 

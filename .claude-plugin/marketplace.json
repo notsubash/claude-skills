@@ -10,13 +10,13 @@
     {
       "name": "core",
       "source": "./plugins/core",
-      "description": "Bundle for every project: craft-core (senior PRs, project docs, security gate, deepen hook) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
+      "description": "Bundle for every project: craft-core (senior PRs, project docs, product lens, security gate, deepen hook) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
       "category": "bundle"
     },
     {
       "name": "craft-core",
       "source": "./plugins/craft-core",
-      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, deepen (+ first-prompt hook, push guard).",
+      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, product-lens, deepen (+ first-prompt hook, push guard).",
       "category": "own"
     },
     {

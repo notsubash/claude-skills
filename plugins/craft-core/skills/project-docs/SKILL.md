@@ -22,7 +22,7 @@ If the `grilling` skill is available, use it. Otherwise ask the questions yourse
 - **Decisions already made.** Stack, hosting, data model, and why each one.
 - **Commands.** How to install, run, test, lint, deploy, and which commands cost money or touch production.
 
-Push back on vague answers. "Fast" isn't a requirement. "p95 under 300 ms on the list endpoint" is.
+Push back on vague answers. "Fast" isn't a requirement. "p95 under 300 ms on the list endpoint" is. If the problem, user or success metric is still fuzzy, run `product-lens` first and write its result into `PRODUCT.md`.
 
 ## 3. Write only what's needed
 
