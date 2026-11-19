@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "One entry per third-party plugin in .claude-plugin/marketplace.json. CI fails if the two disagree on name or SHA. Bump a SHA only with an updated entry: see README > Updating a pinned third-party skill.",
+  "note": "One entry per third-party plugin in .claude-plugin/marketplace.json. CI fails if the two disagree on name or SHA. Full findings: third_party/REVIEW.md. Bump a SHA only with a fresh review: see README > Update a pinned third-party skill safely.",
   "plugins": [
     {
       "name": "superpowers",
@@ -24,12 +24,17 @@
         "hooks/run-hook.cmd (Windows wrapper that finds bash)"
       ],
       "network": "None automatic. The brainstorming visual companion opens a local WebSocket server only when used.",
-      "note": "Low risk. Adds about 2k tokens of always-on context from the SessionStart hook. Overlaps with matt-eng (planning) and with my senior-pr (finishing a branch). Watch trigger collisions.",
+      "note": "Forceful skill-use framing injected every session; brainstorming page loads a primeradiant.com logo unless SUPERPOWERS_DISABLE_TELEMETRY is set; SDD runs long without check-ins and uses many subagents.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium (runtime) + Haiku 5.5 (docs, tests)) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 231,
+        "lines_read_approx": 37000,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#superpowers"
       }
     },
     {
@@ -49,12 +54,17 @@
       "hooks": [],
       "scripts": [],
       "network": "None.",
-      "note": "Markdown only. grill-with-docs calls the grilling and domain-modeling skills by name, so all three ship together. Left out on purpose: tdd (superpowers has TDD), code-review and pr (overlap with built-in /code-review and senior-pr).",
+      "note": "Markdown only. setup may git-init/add remote and edit CLAUDE.md after review; to-spec publishes to the tracker. /triage and /wayfinder are referenced but not in the subset.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Haiku 5.5) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 26,
+        "lines_read_approx": 1158,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#matt-eng"
       }
     },
     {
@@ -82,12 +92,19 @@
         "hooks/ponytail-statusline.{sh,ps1}"
       ],
       "network": "Optional and off by default: userConfig.webhookUrl POSTs each task's row (cost, turns, tokens, and the task name unless sendNames=false) to the URL you set.",
-      "note": "Medium. Hooks run on every prompt and every subagent. ledger=true by default writes a CSV per project to ~/.config/ponytail/band/. 12 MB repo, mostly benchmark assets that are cached but never loaded. Set ledger=false if you don't want the CSVs.",
+      "note": "Ledger (default on) writes prompt snippets to ~/.config/ponytail every turn; webhook off by default but sendNames defaults true; ruleset injected into every session and subagent; one-time statusLine offer uses ExecutionPolicy Bypass.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium (runtime) + Haiku 5.5 (tests, benchmarks, docs)) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 170,
+        "lines_read_approx": 18757,
+        "read_exceptions": [
+          "hooks/band/logo.ts and 4 base64-PNG SVGs checked by character/tag inventory; rule copies diffed against canonical files"
+        ],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#ponytail"
       }
     },
     {
@@ -113,12 +130,17 @@
         "hooks/sg-python.sh (finds a Python 3.8+)"
       ],
       "network": "Yes: api.anthropic.com (or your configured provider) for the LLM diff review at the end of each turn and the agentic review on git commit, using your Claude Code credentials. pip/PyPI on first run.",
-      "note": "First-party Anthropic, but the heaviest plugin here. It spends model usage on every turn that changes code (Opus by default; set the documented model env vars to use a cheaper one). Needs Python and bash; on Windows that means Git Bash. That's why it lives in the opt-in security bundle, not core.",
+      "note": "Unpinned pip install of claude-agent-sdk at SessionStart; Stop review sends diffs of all changed files (filename-only secret filter) to the API on every code-changing turn at Opus cost with no hourly cap; numeric telemetry not in README.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium (hooks) + Haiku 5.5 (tests)) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 96,
+        "lines_read_approx": 34043,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#security-guidance"
       }
     },
     {
@@ -140,12 +162,17 @@
         "validate-findings.cjs, validate-coverage-ledger.cjs (Node validators the skill runs on its own report files; no network)"
       ],
       "network": "None.",
-      "note": "Low. Markdown attack-class references plus two local validators. security-gate uses it for the code-path step when it's installed.",
+      "note": "Tells agents to execute the audited target under an unspecified sandbox; reports go to ~/security-audit-skill; validators refuse all input on native Windows (verified).",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Haiku 5.5) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 22,
+        "lines_read_approx": 5400,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#security-audit"
       }
     },
     {
@@ -166,12 +193,17 @@
         "eval-viewer/generate_review.py (local HTTP server for the review page)"
       ],
       "network": "Local only (viewer on localhost). Model calls through claude -p when you run its eval loop.",
-      "note": "Low. Enabled in this repo's own .claude/settings.json for authoring skills. Not part of any bundle.",
+      "note": "Eval viewer POST has no Origin check (cross-site write of feedback.json while running); kills whatever owns port 3117; description optimizer broken on native Windows (verified).",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 20,
+        "lines_read_approx": 5867,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#skill-creator"
       }
     },
     {
@@ -191,12 +223,17 @@
       "hooks": [],
       "scripts": [],
       "network": "The browser it drives goes wherever you point it.",
-      "note": "Low. Markdown only, but its frontmatter pre-approves Bash(playwright-cli:*) and Bash(npx playwright:*) while the skill is active. Needs `npm i -g @playwright/cli`. Chosen over the Playwright MCP server because a skill plus CLI is lighter on context.",
+      "note": "allowed-tools pre-approves every subcommand incl. attach to the everyday browser profile, cookie and state-save. Add deny rules (see REVIEW.md).",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Haiku 5.5) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 11,
+        "lines_read_approx": 2293,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#playwright-cli"
       }
     },
     {
@@ -221,12 +258,21 @@
         "scripts/live-browser.js (local live-edit server, talks to localhost with a token)"
       ],
       "network": "Yes: on first hook run it downloads a prebuilt engine binary from github.com/pbakaus/impeccable/releases, checks its SHA-256 against engine-checksums.txt (refuses on mismatch or when no hash tool exists), caches it and executes it on every edit. IMPECCABLE_BIN can point at a binary you built yourself.",
-      "note": "Medium. It's the only adopted plugin that downloads and runs a binary. It's checksum-pinned to the commit we pin, so the binary changes only when we bump the SHA. Re-check engine-checksums.txt in the diff on every update.",
+      "note": "Hooks run an unreviewable prebuilt engine with network on every edit; account sign-in upsell, report upload and telemetry; writes hooks into .claude settings after consent; live-mode tool output overrides the skill text.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium (two readers)) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 70,
+        "lines_read_approx": 21636,
+        "read_exceptions": [
+          "modern-screenshot.umd.js (minified upstream library) reviewed by API/URL inventory",
+          "data/font-index.json (1.1 MB single-line data) sampled start/middle/end plus pattern scans",
+          "the prebuilt engine binary cannot be read"
+        ],
+        "verdict": "adopt with care",
+        "details": "third_party/REVIEW.md#impeccable"
       }
     },
     {
@@ -249,12 +295,19 @@
         "scripts/dev.mjs (spawns the Vite dev server for the playground)"
       ],
       "network": "None automatic. `npm install` for the playground pulls npm packages, and rehearsals need playwright-core.",
-      "note": "Low to medium. No hooks. 2.4 MB of TSX and assets is cached. Brand SVGs carry their own licenses (kit/brands/SOURCES.md). Don't ship third-party logos without checking.",
+      "note": "No hooks or runtime network. Asks to npm i -D playwright-core in the host project; assets/app-icons.ts is not MIT; brand logos keep owners' terms.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Opus 5.5 medium (two readers)) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 369,
+        "lines_read_approx": 53236,
+        "read_exceptions": [
+          "package-lock.json: resolved URLs and install-script flags checked, integrity hashes not read individually"
+        ],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#stageshow"
       }
     },
     {
@@ -274,12 +327,17 @@
       "hooks": [],
       "scripts": [],
       "network": "None.",
-      "note": "Low. Markdown and example images only. Smaller repo (about 200 stars), so read the diff on every SHA bump.",
+      "note": "Markdown only; charles-unslop is CC-BY-4.0 with attribution present.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Haiku 5.5) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 8,
+        "lines_read_approx": 920,
+        "read_exceptions": [],
+        "verdict": "adopt",
+        "details": "third_party/REVIEW.md#charles-design"
       }
     },
     {
@@ -299,12 +357,17 @@
       "hooks": [],
       "scripts": [],
       "network": "None.",
-      "note": "Low. A single 29 KB SKILL.md.",
+      "note": "Markdown only; references ../choreograph/SKILL.md, which is not pinned.",
       "reviewed": {
         "date": "2026-11-19",
-        "by": "Claude (Opus 5.5) for Subash Pandey",
-        "method": "Every file statically scanned with cli/lib/scan.mjs; every hook config and every script a hook runs automatically was read; flagged lines read in context.",
-        "full_read": false
+        "by": "Reader subagents (Haiku 5.5) for Subash Pandey; key claims verified by hand",
+        "method": "Every non-binary file read line by line on a checkout of the pinned commit; nothing executed.",
+        "full_read": true,
+        "files_read": 1,
+        "lines_read_approx": 685,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#emil-design-eng"
       }
     }
   ]

@@ -113,7 +113,7 @@ Third-party skills aren't copied into this repo. A marketplace entry points at t
    - One folder (a plugin, or a folder with `SKILL.md` at its root): `"source": { "source": "git-subdir", "url": "...", "path": "skills/the-skill", "sha": "<sha>" }`
    - A subset of skills from a folder that has no `plugin.json`: add `"strict": false, "skills": ["./a", "./b"]` (see `matt-eng`).
 4. **Add the review** to `third_party/manifest.json`: upstream, path, SHA, license, hooks, scripts, network, and a short security note.
-5. Optionally add it to a bundle's `dependencies`. Then `node scripts/ci-check.mjs` and open a PR. CI fails if a pin is not a full SHA or has no matching review.
+5. Write the findings into `third_party/REVIEW.md` too. Then optionally add it to a bundle's `dependencies`. Then `node scripts/ci-check.mjs` and open a PR. CI fails if a pin is not a full SHA or has no matching review.
 
 ## Update a pinned third-party skill safely
 
