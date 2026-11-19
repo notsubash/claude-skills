@@ -70,7 +70,7 @@ jobs:
         run: claude plugin eval plugins/${{ matrix.plugin }} --tag trigger no-trigger --ablation none --runs 3 -j 4 --trust-plugin --no-publish --threshold 0.66 --max-cost-usd 8 --json trigger.json
       - name: Task cases, with and without the plugin
         if: always()
-        run: claude plugin eval plugins/${{ matrix.plugin }} --tag task --ablation with-without --runs 3 -j 4 --trust-plugin --no-publish --threshold 0.6 --max-cost-usd 8 --json task.json
+        run: claude plugin eval plugins/${{ matrix.plugin }} --tag task --ablation with-without --allow-tools Write Edit --runs 3 -j 4 --trust-plugin --no-publish --threshold 0.6 --max-cost-usd 8 --json task.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

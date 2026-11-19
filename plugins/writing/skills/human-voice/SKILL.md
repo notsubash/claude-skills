@@ -17,7 +17,7 @@ If there are no voice samples, ask for one or two things the user wrote themselv
 
 ## 2. Draft
 
-Unless the user asks for one, write **2 or 3 drafts in different styles**, labelled (for example: plain and direct / story-first / technical). Each draft:
+When the user asks for **a** reply, answer or post, or gives a short limit (a comment reply, a tweet), write **one** draft in their style. Otherwise, or when they ask for options, write **2 or 3 drafts in different styles**, labelled (for example: plain and direct / story-first / technical). Each draft:
 - Opens with the point or a concrete detail. No throat-clearing.
 - Uses specifics from the source: the actual feature, number or decision.
 - Sounds like the user: their sentence length, their contractions, their level of formality.
