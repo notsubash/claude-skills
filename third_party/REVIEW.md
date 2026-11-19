@@ -13,7 +13,7 @@ Every non-binary file of every pinned third-party plugin was read line by line o
 | [security-audit](#security-audit) | 22 (~5.4k) | adopt with notes | Validators refuse all input on native Windows |
 | [skill-creator](#skill-creator) | 20 (~5.9k) | adopt with notes | Eval viewer has no Origin check; optimizer broken on native Windows |
 | [playwright-cli](#playwright-cli) | 11 (~2.3k) | adopt with notes | Pre-approves `attach` to your everyday browser profile |
-| [impeccable](#impeccable) | 70 (~21.6k) | adopt with care | Hooks run an unreadable prebuilt binary with network access on every edit |
+| [impeccable](#impeccable) | 70 (~21.6k) | adopt with care (opt-in) | Hooks run an unreadable prebuilt binary with network access on every edit |
 | [stageshow](#stageshow) | 369 (~53k) | adopt with notes | Asks to `npm i -D playwright-core` in your project; app-icon artwork isn't MIT |
 | [charles-design](#charles-design) | 8 (~0.9k) | adopt | Markdown only |
 | [emil-design-eng](#emil-design-eng) | 1 (685) | adopt with notes | Points at a `choreograph` skill that isn't pinned |
@@ -93,7 +93,7 @@ emilkowalski/skills @ `64eb3de`, `skills/emil-design-eng` · MIT
 - A single Markdown file with no code. It refers to `../choreograph/SKILL.md` twice; that skill isn't in the pin, so the reference is dead. On invocation it replies only "I'm ready to help…" and waits.
 
 ## Recommended settings
-These follow from the reviews. They are not applied automatically: they go in your user or project `settings.json` `env` block, plugin options, or deny rules.
+These follow from the reviews. `skills add` applies all of them (see README > Safeguards), and `skills remove` takes them out again. They're listed here for anyone installing these plugins without the CLI.
 
 | For | Setting | Why |
 |---|---|---|
@@ -101,5 +101,5 @@ These follow from the reviews. They are not applied automatically: they go in yo
 | ponytail | plugin options `ledger=false`, `sendNames=false` (`claude plugin configure ponytail@craft`) | No prompt snippets on disk or in any future webhook |
 | ponytail | decline its statusLine offer | Avoids an ExecutionPolicy Bypass entry in settings.json |
 | security-guidance | `SECURITY_REVIEW_MODEL` / `SG_AGENTIC_MODEL` set to a cheaper model, or `ENABLE_STOP_REVIEW=0` | Per-turn Opus review has no hourly cap |
-| playwright-cli | permission deny rules `Bash(playwright-cli attach:*)`, `Bash(playwright-cli cookie-set:*)`, `Bash(playwright-cli state-save:*)` | Deny beats the skill's pre-approval |
-| impeccable | keep its engine hooks off unless you trust the binary, and decline the account sign-in | Unreviewable code on every edit |
+| playwright-cli | deny `Bash(playwright-cli attach:*)` (and the PowerShell form); ask for `cookie-*`, `state-save`, `state-load`, `run-code`, `kill-all`, `delete-data` | Deny and ask beat the skill's pre-approval |
+| impeccable | kept out of every bundle; the CLI requires `--accept-impeccable`; decline the account sign-in | Unreviewable code on every edit |

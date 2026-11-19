@@ -22,7 +22,7 @@
     {
       "name": "web",
       "source": "./plugins/web",
-      "description": "Bundle for UI/UX: craft-web (ui-pipeline) plus impeccable, stageshow, charles-unslop/polish, Emil Kowalski and Playwright.",
+      "description": "Bundle for UI/UX: craft-web (ui-pipeline) plus stageshow, charles-unslop/polish, Emil Kowalski and Playwright. impeccable is opt-in.",
       "category": "bundle"
     },
     {
@@ -143,7 +143,7 @@
         "path": "plugin",
         "sha": "b49177d32788f2dc585c42831d845dacf1ebed2c"
       },
-      "description": "Third-party (Paul Bakaus, Apache-2.0). Design fluency and anti-pattern detection. Its hooks download a checksum-verified engine binary. Review: third_party/REVIEW.md#impeccable",
+      "description": "Third-party (Paul Bakaus, Apache-2.0). OPT-IN: its hooks run a prebuilt engine binary with network access on every edit; the CLI requires --accept-impeccable. Review: third_party/REVIEW.md#impeccable",
       "category": "third-party"
     },
     {

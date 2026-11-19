@@ -15,7 +15,11 @@ Order matters. Decide the direction before styling, remove the slop before polis
 
 ## 1. impeccable: direction and critique
 
-Run `/impeccable critique` (or `audit`) on the current screens, then `shape` the direction from step 0. Fix the hierarchy, layout, information architecture and copy here, before any decoration. If the project has no design context file yet, use `/impeccable init`.
+impeccable is opt-in. Its hooks run a prebuilt binary, so it isn't in the web bundle.
+- **If it's installed:** run `/impeccable critique` (or `audit`) on the current screens, then `shape` the direction from step 0. If the project has no design context file yet, use `/impeccable init`. Decline its account sign-in prompt unless the user wants it.
+- **If not:** do the critique yourself. Name the primary action and check it's the most prominent element. Check the reading order, the information architecture, empty, error and loading states, contrast and copy. Write the problems down as a numbered list before changing anything.
+
+Either way, fix the hierarchy, layout, information architecture and copy here, before any decoration.
 
 ## 2. stageshow: product UI and demos
 

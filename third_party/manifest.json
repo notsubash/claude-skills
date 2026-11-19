@@ -242,9 +242,7 @@
       "path": "plugin",
       "sha": "b49177d32788f2dc585c42831d845dacf1ebed2c",
       "license": "Apache-2.0",
-      "bundles": [
-        "web"
-      ],
+      "bundles": [],
       "scan": {
         "files": 71,
         "bytes": 2333512,

@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "description": "Bundle for UI/UX work: craft-web plus impeccable, stageshow, charles-design, emil-design-eng and playwright-cli.",
+  "description": "Bundle for UI/UX work: craft-web plus stageshow, charles-design, emil-design-eng and playwright-cli. impeccable is opt-in (skills add impeccable --accept-impeccable).",
   "author": {
     "name": "Subash Pandey",
     "url": "https://github.com/notsubash"
@@ -13,7 +13,6 @@
   ],
   "dependencies": [
     "craft-web",
-    "impeccable",
     "stageshow",
     "charles-design",
     "emil-design-eng",

@@ -15,6 +15,31 @@ const MARKET = 'craft';
 const DEFAULT_SOURCE = 'notsubash/claude-skills';
 const MIN_CLAUDE = [2, 1, 300];
 
+// Safeguards from third_party/REVIEW.md, applied by `skills add` and undone by `skills remove`.
+// env / deny / ask go into the project's .claude/settings.json; options go through
+// `claude plugin configure` (stored in your user settings). Skip all of it with --no-safeguards.
+const pw = (sub) => [`Bash(playwright-cli ${sub}:*)`, `PowerShell(playwright-cli ${sub}:*)`];
+const SAFEGUARDS = {
+  superpowers: { env: { SUPERPOWERS_DISABLE_TELEMETRY: '1' }, why: 'no third-party logo request from the brainstorming page' },
+  ponytail: { options: { ledger: 'false', sendNames: 'false' }, why: 'no prompt snippets in ~/.config/ponytail or in any webhook' },
+  'security-guidance': { env: { SECURITY_REVIEW_MODEL: 'claude-sonnet-5-5', SG_AGENTIC_MODEL: 'claude-sonnet-5-5' }, why: 'per-turn reviews on Sonnet instead of uncapped Opus' },
+  'playwright-cli': {
+    deny: [...pw('attach'), 'Bash(npx playwright cli attach:*)'],
+    ask: ['cookie-get', 'cookie-list', 'cookie-set', 'cookie-delete', 'cookie-clear', 'state-save', 'state-load', 'run-code', 'kill-all', 'delete-data'].flatMap(pw),
+    why: 'never attach to your everyday browser profile; ask before cookie, auth-state, run-code and kill commands',
+  },
+};
+// Plugins that need an explicit flag because they run code nobody can review.
+const OPT_IN = {
+  impeccable: {
+    flag: 'accept-impeccable',
+    warning: `impeccable's hooks run a prebuilt engine binary (not reviewable) with network access on every
+session start, edit and stop. It also asks you to sign in to an Impeccable account, uploads critiques
+when signed in, sends a telemetry ping, can write hook entries into .claude/settings files, and in live
+mode treats its tool output as overriding the skill. Details: third_party/REVIEW.md#impeccable`,
+  },
+};
+
 // ---------- helpers ----------
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -66,10 +91,53 @@ function installedVersions() {
   const r = claude(['plugin', 'list', '--json'], { capture: true, allowFail: true });
   try { return Object.fromEntries(JSON.parse(r.stdout).filter((p) => p.scope === 'project').map((p) => [p.id.split('@')[0], p.version])); } catch { return {}; }
 }
+function applySafeguards(plugins, lock) {
+  if (flag('no-safeguards')) return;
+  const s = readJson(settingsPath, {});
+  lock.safeguards ||= {};
+  for (const p of plugins) {
+    const g = SAFEGUARDS[p];
+    if (!g || lock.safeguards[p]) continue;
+    const added = { env: [], deny: [], ask: [] };
+    for (const [k, v] of Object.entries(g.env || {})) if (!(s.env && k in s.env)) { (s.env ||= {})[k] = v; added.env.push(k); }
+    for (const kind of ['deny', 'ask']) for (const rule of g[kind] || []) {
+      s.permissions ||= {}; s.permissions[kind] ||= [];
+      if (!s.permissions[kind].includes(rule)) { s.permissions[kind].push(rule); added[kind].push(rule); }
+    }
+    if (g.options) {
+      const r = spawnSync('claude plugin configure ' + quote(`${p}@${MARKET}`) + ' --values-stdin', { cwd: projectDir, shell: true, input: JSON.stringify(g.options), encoding: 'utf8' });
+      if (r.status !== 0) console.warn(`skills: could not set ${p} options (${Object.entries(g.options).map(([k, v]) => `${k}=${v}`).join(', ')}); run \`claude plugin configure ${p}@${MARKET}\``);
+      else added.options = Object.keys(g.options);
+    }
+    lock.safeguards[p] = added;
+    console.log(`  safeguard for ${p}: ${g.why}`);
+  }
+  writeJson(settingsPath, s);
+}
+
+function removeSafeguards(lock, stillEnabled) {
+  if (!lock?.safeguards) return;
+  const s = readJson(settingsPath, null);
+  for (const [p, added] of Object.entries(lock.safeguards)) {
+    if (stillEnabled.has(p)) continue;
+    if (s) {
+      for (const k of added.env || []) if (s.env) delete s.env[k];
+      for (const kind of ['deny', 'ask']) if (s.permissions?.[kind]) s.permissions[kind] = s.permissions[kind].filter((r) => !(added[kind] || []).includes(r));
+    }
+    delete lock.safeguards[p]; // plugin options stay in your user settings; they are harmless without the plugin
+  }
+  if (s) writeJson(settingsPath, s);
+  if (Object.keys(lock.safeguards).length === 0) delete lock.safeguards;
+}
+
 function cleanupSettings() {
   const s = readJson(settingsPath, null);
   if (!s) return;
-  for (const k of ['enabledPlugins', 'extraKnownMarketplaces']) if (s[k] && Object.keys(s[k]).length === 0) delete s[k];
+  if (s.permissions) {
+    for (const k of ['allow', 'deny', 'ask']) if (Array.isArray(s.permissions[k]) && s.permissions[k].length === 0) delete s.permissions[k];
+    if (Object.keys(s.permissions).length === 0) delete s.permissions;
+  }
+  for (const k of ['enabledPlugins', 'extraKnownMarketplaces', 'env']) if (s[k] && Object.keys(s[k]).length === 0) delete s[k];
   if (Object.keys(s).length === 0) rmSync(settingsPath); else writeJson(settingsPath, s);
   const dir = join(projectDir, '.claude');
   if (existsSync(dir) && readdirSync(dir).length === 0) rmdirSync(dir);
@@ -102,6 +170,11 @@ function add(name) {
     name = bundle; entry = pluginEntry(name);
   }
   if (!existsSync(projectDir)) die(`project folder not found: ${projectDir}`);
+  const optIn = OPT_IN[name];
+  if (optIn && !flag(optIn.flag)) {
+    console.error(`${optIn.warning}\n\nTo install it anyway: skills add ${name} --${optIn.flag}`);
+    process.exit(1);
+  }
   const source = resolveSource();
   const before = new Set(enabledCraft(readJson(settingsPath, {})));
   if (!readJson(settingsPath, {}).extraKnownMarketplaces?.[MARKET]) claude(['plugin', 'marketplace', 'add', source, '--scope', 'project']);
@@ -118,6 +191,7 @@ function add(name) {
     if (p === name) requestedBy.add('user'); else if (!before.has(p)) requestedBy.add(name);
     lock.plugins[p] = { version: versions[p] ?? null, ...(typeof e.source === 'object' ? { upstream: e.source.url, path: e.source.path, sha: e.source.sha } : {}), requestedBy: [...requestedBy] };
   }
+  applySafeguards(after, lock);
   writeJson(lockPath, lock);
   console.log(`\nAdded ${name}${after.length > before.size + 1 ? ` (+ ${after.filter((p) => p !== name && !before.has(p)).join(', ')})` : ''}. Commit .claude/settings.json and .claude/craft.lock.json.`);
   console.log('Each other clone runs `skills add` once, or `claude plugin install <name>@craft --scope project` per plugin (project settings enable plugins but do not download them).');
@@ -132,6 +206,7 @@ function remove(name) {
   const lock = readJson(lockPath, null);
   if (lock) {
     for (const p of Object.keys(lock.plugins)) if (!still.has(p)) delete lock.plugins[p];
+    removeSafeguards(lock, still);
     if (Object.keys(lock.plugins).length) writeJson(lockPath, lock); else rmSync(lockPath);
   }
   if (still.size === 0) claude(['plugin', 'marketplace', 'remove', MARKET, '--scope', 'project'], { allowFail: true });
@@ -199,6 +274,7 @@ function doctor() {
     } else ok(!on.length, 'lockfile present', 'run skills add <bundle> to write it');
     const installed = installedVersions();
     for (const p of on) ok(p in installed, `${p}@craft installed on this machine`, `claude plugin install ${p}@craft --scope project`);
+    for (const p of on.filter((p) => SAFEGUARDS[p])) ok(lock?.safeguards?.[p], `${p} safeguards applied (${SAFEGUARDS[p].why})`, `skills remove ${p} && skills add ${p}, or see third_party/REVIEW.md#recommended-settings`);
   }
   const m = run('claude', ['plugin', 'validate', REPO], { capture: true, allowFail: true });
   ok(m.status === 0, 'marketplace manifest validates', 'claude plugin validate .');
@@ -269,7 +345,8 @@ if (!commands[cmd]) {
   console.log(`skills - manage craft plugins in a project with Claude Code's native plugin system
 
   skills list [--project PATH]
-  skills add <bundle|plugin|skill> [--project PATH] [--source github|local|PATH|owner/repo]
+  skills add <bundle|plugin|skill> [--project PATH] [--source github|local|PATH|owner/repo] [--no-safeguards]
+             (impeccable also needs --accept-impeccable)
   skills remove <bundle|plugin> [--project PATH]
   skills update [--dry-run] [--project PATH]
   skills doctor [--project PATH]

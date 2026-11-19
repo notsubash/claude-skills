@@ -9,12 +9,12 @@ Everything works in PowerShell and in bash.
 | Bundle | You get | Install |
 |---|---|---|
 | **core** | `craft-core` (senior-pr, security-gate, project-docs, deepen + the first-prompt hook and the push guard), [superpowers](https://github.com/obra/superpowers), [Matt Pocock's](https://github.com/mattpocock/skills) grill-with-docs / grilling / domain-modeling / codebase-design / to-spec / to-tickets, and [ponytail](https://github.com/DietrichGebert/ponytail) | `skills add core` |
-| **web** | `craft-web` (ui-pipeline), [impeccable](https://github.com/pbakaus/impeccable), [stageshow](https://github.com/benjitaylor/skills), [charles-unslop and charles-polish](https://github.com/LemonFace0309/charles-skills), [emil-design-eng](https://github.com/emilkowalski/skills), [playwright-cli](https://github.com/microsoft/playwright-cli) | `skills add web` |
+| **web** | `craft-web` (ui-pipeline), [stageshow](https://github.com/benjitaylor/skills), [charles-unslop and charles-polish](https://github.com/LemonFace0309/charles-skills), [emil-design-eng](https://github.com/emilkowalski/skills), [playwright-cli](https://github.com/microsoft/playwright-cli). [impeccable](https://github.com/pbakaus/impeccable) is opt-in, see below | `skills add web` |
 | **security** | Anthropic's [security-guidance](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance) hooks and Cloudflare's [security-audit](https://github.com/cloudflare/security-audit-skill) | `skills add security` |
 | **oss** | oss-contribute, oss-portfolio | `skills add oss` |
 | **writing** | human-voice, figure-check | `skills add writing` |
 
-`skills list` prints the full list, with each third-party pin. Every third-party plugin also installs on its own (`skills add impeccable`). Your own skills install by the plugin that contains them: `skills add senior-pr` installs `craft-core`, since Claude Code installs plugins, not single skills.
+`skills list` prints the full list, with each third-party pin. Every third-party plugin also installs on its own (`skills add playwright-cli`). Your own skills install by the plugin that contains them: `skills add senior-pr` installs `craft-core`, since Claude Code installs plugins, not single skills.
 
 ### The workflow these encode
 
@@ -22,7 +22,7 @@ Everything works in PowerShell and in bash.
 2. **Document:** `project-docs` sets up a lean CLAUDE.md, PRODUCT.md, decision log, ADRs and backlog.
 3. **Plan:** superpowers `brainstorming`, then `writing-plans`, or Matt's `to-spec` and `to-tickets`.
 4. **Build:** superpowers `test-driven-development` and `subagent-driven-development`, `domain-modeling` and `codebase-design` for DDD and deep modules, and ponytail to keep it simple.
-5. **UI:** `ui-pipeline` runs impeccable, then stageshow, then charles-unslop, then emil-design-eng, verified with playwright-cli screenshots.
+5. **UI:** `ui-pipeline` runs impeccable (when installed; otherwise a built-in critique), then stageshow, then charles-unslop, then emil-design-eng, verified with playwright-cli screenshots.
 6. **Ship:** `security-gate` writes a CLEARED or BLOCKED report, the push guard checks it on `git push` and `gh pr create`, and `senior-pr` writes the commits and PR.
 
 ## Set up the CLI (once)
@@ -67,6 +67,20 @@ skills update                  # apply: marketplace update + plugin update, then
 ```
 
 Use `--source local` to install from your clone instead of GitHub, for trying out unpushed changes. Plugins from a local directory marketplace are read in place, so edits apply on the next session or `/reload-plugins`.
+
+### Safeguards (applied automatically)
+
+Every third-party plugin was read line by line before adoption ([third_party/REVIEW.md](third_party/REVIEW.md)). `skills add` applies these safeguards from that review, and `skills remove` takes them out again:
+
+| Plugin | What `skills add` sets | Why |
+|---|---|---|
+| superpowers | `env.SUPERPOWERS_DISABLE_TELEMETRY=1` in project settings | No third-party logo request from the brainstorming page |
+| ponytail | plugin options `ledger=false`, `sendNames=false` (via `claude plugin configure`, stored in your user settings) | No prompt snippets in `~/.config/ponytail` or in any webhook |
+| security-guidance | `env.SECURITY_REVIEW_MODEL` and `env.SG_AGENTIC_MODEL` set to `claude-sonnet-5-5` | Per-turn reviews on Sonnet instead of uncapped Opus |
+| playwright-cli | deny `playwright-cli attach`; ask before `cookie-*`, `state-save/load`, `run-code`, `kill-all`, `delete-data` | Never attach to your everyday browser profile. Deny and ask rules beat the skill's pre-approval |
+| impeccable | not in any bundle; `skills add impeccable` refuses without `--accept-impeccable` | Its hooks run a prebuilt engine binary nobody can review, with network access, on every edit |
+
+`--no-safeguards` skips them. Project `env` values take effect once you trust the folder. `skills doctor` checks the safeguards are in place. Two things stay manual: decline ponytail's offer to add a statusLine, and decline impeccable's account sign-in if you install it.
 
 ### Switches
 
