@@ -5,6 +5,7 @@
 //   3. start a fresh `claude -p` session and read the skills it reports in its init event
 //   4. compare to tests/expected/<bundle>.json exactly
 //   5. `skills remove <bundle>` and require `git status --porcelain` to be empty
+// With --local (just-me scope), git status must also be empty right after the add.
 // Step 3 needs no API credentials: the init event is emitted before any model call.
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -15,12 +16,14 @@ import { spawnSync } from 'node:child_process';
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const bundle = process.argv[2] || 'core';
 const update = process.argv.includes('--update-expected');
+const scopeArgs = process.argv.includes('--local') ? ['--local'] : [];
 const root = mkdtempSync(join(tmpdir(), 'craft-install-'));
 const project = join(root, 'project');
 const env = { ...process.env, CLAUDE_CONFIG_DIR: join(root, 'config'), CRAFT_DEEPEN: 'off' };
 delete env.ANTHROPIC_API_KEY; // prove the check needs no credentials
 
-const q = (a) => (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(a) ? a : `"${a.replace(/"/g, '\\"')}"`);
+// cmd.exe needs double quotes; POSIX shells expand $ inside them, so single quotes there.
+const q = (a) => (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(a) ? a : process.platform === 'win32' ? `"${a.replace(/"/g, '\\"')}"` : `'${a.replace(/'/g, `'\\''`)}'`);
 function sh(bin, args, opts = {}) {
   const r = spawnSync([bin, ...args].map(q).join(' '), { cwd: project, env, shell: true, encoding: 'utf8', ...opts });
   if (r.status !== 0 && !opts.allowFail) { console.error(r.stdout, r.stderr); throw new Error(`${bin} ${args.join(' ')} -> exit ${r.status}`); }
@@ -34,8 +37,13 @@ try {
   spawnSync('git', ['init', '-q', project]);
   sh('git', ['-c', 'user.email=ci@example.com', '-c', 'user.name=ci', 'commit', '-q', '--allow-empty', '-m', 'init']);
 
-  step(`skills add ${bundle} --source local`);
-  sh('node', [join(REPO, 'cli', 'skills.mjs'), 'add', bundle, '--source', 'local'], { stdio: 'inherit' });
+  step(`skills add ${bundle} --source local ${scopeArgs.join(' ')}`);
+  sh('node', [join(REPO, 'cli', 'skills.mjs'), 'add', bundle, '--source', 'local', ...scopeArgs], { stdio: 'inherit' });
+  if (scopeArgs.length) {
+    const dirty = sh('git', ['status', '--porcelain', '--untracked-files=all']).stdout.trim();
+    if (dirty) { failed = true; console.error(`FAIL a just-me install changed the project:\n${dirty}`); }
+    else console.log('ok  git status is empty after a just-me install');
+  }
 
   step('fresh session: skills reported by the init event');
   const r = sh('claude', ['-p', 'hi', '--output-format', 'stream-json', '--verbose', '--max-turns', '1'], { allowFail: true });
@@ -56,7 +64,7 @@ try {
   } else console.log('ok  exactly the expected skills');
 
   step(`skills remove ${bundle}`);
-  sh('node', [join(REPO, 'cli', 'skills.mjs'), 'remove', bundle], { stdio: 'inherit' });
+  sh('node', [join(REPO, 'cli', 'skills.mjs'), 'remove', bundle, ...scopeArgs], { stdio: 'inherit' });
   const status = sh('git', ['status', '--porcelain', '--untracked-files=all']).stdout.trim();
   if (status) { failed = true; console.error(`FAIL project not clean after remove:\n${status}`); }
   else console.log('ok  git status is empty after remove');

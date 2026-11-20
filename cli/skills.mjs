@@ -1,23 +1,30 @@
 #!/usr/bin/env node
-// craft skills CLI - a thin wrapper over Claude Code's native plugin system.
-// It never copies skill files into a project. It runs `claude plugin ...` with
-// --scope project, which records enabledPlugins + extraKnownMarketplaces in
-// .claude/settings.json, and it writes one file of its own: .claude/craft.lock.json.
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, cpSync, rmdirSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+// craft skills CLI - a thin, friendly layer over Claude Code's native plugin system.
+// It never copies skill files anywhere. It runs `claude plugin ...` in one of three scopes:
+//   project  .claude/settings.json        (shared: commit it)            lock: .claude/craft.lock.json
+//   local    .claude/settings.local.json  (just you: git-ignored)        lock: .claude/craft.lock.local.json
+//   user     ~/.claude/settings.json      (global: every project)        lock: ~/.claude/craft.lock.json
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, readdirSync, cpSync, rmdirSync, appendFileSync, realpathSync } from 'node:fs';
+import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { spawn, spawnSync } from 'node:child_process';
+import { tmpdir, homedir } from 'node:os';
 import { scanTree } from './lib/scan.mjs';
+import * as ui from './lib/ui.mjs';
+import { c, sym } from './lib/ui.mjs';
+import { select, multiselect, confirm, isCancel } from './lib/picker.mjs';
+import { loadMarketplace, BLURB, HOOKS, SECTIONS, RECIPES, SCOPES, ownSkills, dependencies, skillsOf, pluginForSkill, includedIn, THIRD_PARTY_SKILLS } from './lib/catalog.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MARKET = 'craft';
 const DEFAULT_SOURCE = 'notsubash/claude-skills';
 const MIN_CLAUDE = [2, 1, 300];
+const CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
+const WIN = process.platform === 'win32';
 
 // Safeguards from third_party/REVIEW.md, applied by `skills add` and undone by `skills remove`.
-// env / deny / ask go into the project's .claude/settings.json; options go through
-// `claude plugin configure` (stored in your user settings). Skip all of it with --no-safeguards.
+// env / deny / ask go into the scope's settings file; options go through `claude plugin configure`
+// (stored in your user settings). Skip all of it with --no-safeguards.
 const pw = (sub) => [`Bash(playwright-cli ${sub}:*)`, `PowerShell(playwright-cli ${sub}:*)`];
 const SAFEGUARDS = {
   superpowers: { env: { SUPERPOWERS_DISABLE_TELEMETRY: '1' }, why: 'no third-party logo request from the brainstorming page' },
@@ -40,84 +47,170 @@ mode treats its tool output as overriding the skill. Details: third_party/REVIEW
   },
 };
 
-// ---------- helpers ----------
+// ---------- arguments ----------
 const argv = process.argv.slice(2);
 const cmd = argv[0];
-const positional = argv.slice(1).filter((a, i, all) => !a.startsWith('--') && !(all[i - 1] || '').match(/^--(project|source|bundle|description|path|sha|name)$/));
+const VALUED = new Set(['dir', 'project', 'source', 'bundle', 'description', 'path', 'sha', 'name', 'scope']);
+const positional = [];
+for (let i = 1; i < argv.length; i++) {
+  const a = argv[i];
+  if (a.startsWith('--') && VALUED.has(a.slice(2))) { i++; continue; }
+  if (!a.startsWith('-')) positional.push(a);
+}
 const opt = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : undefined; };
-const flag = (n) => argv.includes(`--${n}`);
-const projectDir = resolve(opt('project') || process.cwd());
-const settingsPath = join(projectDir, '.claude', 'settings.json');
-const lockPath = join(projectDir, '.claude', 'craft.lock.json');
+const flag = (...ns) => ns.some((n) => argv.includes(n.length === 1 ? `-${n}` : `--${n}`));
+const projectDir = resolve(opt('dir') || opt('project') || process.cwd());
+const assumeYes = flag('yes', 'y');
 
-function die(msg, code = 1) { console.error(`skills: ${msg}`); process.exit(code); }
-const readJson = (p, fallback) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : fallback);
-const writeJson = (p, v) => { mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, JSON.stringify(v, null, 2) + '\n'); };
-
-function quote(a) { return /^[A-Za-z0-9_@%+=:,./\\-]+$/.test(a) ? a : `"${a.replace(/"/g, '\\"')}"`; }
-// shell:true so `claude` resolves to claude.cmd / claude.exe on Windows and to the binary elsewhere.
-function run(bin, args, { cwd = projectDir, capture = false, allowFail = false } = {}) {
-  const r = spawnSync([bin, ...args].map(quote).join(' '), { cwd, shell: true, encoding: 'utf8', stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit' });
-  if (r.status !== 0 && !allowFail) die(`\`${bin} ${args.join(' ')}\` failed (exit ${r.status})${capture ? `\n${r.stderr || r.stdout}` : ''}`);
-  return r;
-}
-const claude = (args, o) => run('claude', args, o);
-
-function marketplace() { return readJson(join(REPO, '.claude-plugin', 'marketplace.json')); }
-function pluginEntry(name) { return marketplace().plugins.find((p) => p.name === name); }
-function ownSkills(bundle) {
-  const dir = join(REPO, 'plugins', bundle, 'skills');
-  return existsSync(dir) ? readdirSync(dir).filter((d) => existsSync(join(dir, d, 'SKILL.md'))) : [];
-}
-function findSkillBundle(skill) {
-  for (const p of marketplace().plugins) if (typeof p.source === 'string' && ownSkills(p.name).includes(skill)) return p.name;
+function scopeFromFlags() {
+  const s = opt('scope');
+  if (s) { if (!['project', 'local', 'user', 'global'].includes(s)) die(`--scope must be project, local or user (got "${s}")`); return s === 'global' ? 'user' : s; }
+  if (flag('global', 'g', 'user')) return 'user';
+  if (flag('local', 'just-me')) return 'local';
+  if (flag('shared')) return 'project';
   return null;
 }
-function enabledCraft(settings) {
-  return Object.entries(settings.enabledPlugins || {}).filter(([k, v]) => v && k.endsWith(`@${MARKET}`)).map(([k]) => k.split('@')[0]);
+
+// ---------- helpers ----------
+class Fatal extends Error {}
+function die(msg) { throw new Fatal(msg); }
+const readJson = (p, fallback) => (existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : fallback);
+const writeJson = (p, v) => { mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, JSON.stringify(v, null, 2) + '\n'); };
+// Real paths, so macOS /var → /private/var and symlinked folders compare equal. Case-insensitive on Windows.
+const real = (p) => { try { return realpathSync.native(resolve(p)); } catch { return resolve(p); } };
+const samePath = (a, b) => (WIN ? real(a).toLowerCase() === real(b).toLowerCase() : real(a) === real(b));
+
+function ctxFor(scope, dir = projectDir) {
+  if (scope === 'user') return { scope, dir, settings: join(CONFIG_DIR, 'settings.json'), lock: join(CONFIG_DIR, 'craft.lock.json') };
+  if (scope === 'local') return { scope, dir, settings: join(dir, '.claude', 'settings.local.json'), lock: join(dir, '.claude', 'craft.lock.local.json') };
+  return { scope: 'project', dir, settings: join(dir, '.claude', 'settings.json'), lock: join(dir, '.claude', 'craft.lock.json') };
 }
+const ALL_SCOPES = ['user', 'project', 'local'];
+const scopeName = (s) => SCOPES[s].short;
+const scopeFlag = (s) => (SCOPES[s].flag ? ` ${SCOPES[s].flag}` : '');
+
+// cmd.exe needs double quotes; POSIX shells expand $ and backticks inside them, so use single quotes there.
+function quote(a) {
+  if (/^[A-Za-z0-9_@%+=:,./\\-]+$/.test(a)) return a;
+  return WIN ? `"${a.replace(/"/g, '\\"')}"` : `'${a.replace(/'/g, `'\\''`)}'`;
+}
+// shell:true so `claude` resolves to claude.cmd / claude.exe on Windows and to the binary elsewhere.
+function runSync(bin, args, { cwd = projectDir, capture = true, allowFail = false, input } = {}) {
+  const r = spawnSync([bin, ...args].map(quote).join(' '), { cwd, shell: true, encoding: 'utf8', input, stdio: capture ? ['pipe', 'pipe', 'pipe'] : 'inherit' });
+  if (r.status !== 0 && !allowFail) die(`\`${bin} ${args.join(' ')}\` failed (exit ${r.status})${capture ? `\n${(r.stderr || r.stdout || '').trim()}` : ''}`);
+  return r;
+}
+function runAsync(bin, args, { cwd = projectDir } = {}) {
+  return new Promise((res) => {
+    const p = spawn([bin, ...args].map(quote).join(' '), { cwd, shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '', stderr = '';
+    p.stdout.on('data', (d) => (stdout += d)); p.stderr.on('data', (d) => (stderr += d));
+    p.on('close', (status) => res({ status, stdout, stderr }));
+  });
+}
+// A `claude ...` call behind a spinner. Prints the captured output only when it fails.
+async function step(label, args, { cwd, allowFail = false, done } = {}) {
+  const s = ui.spinner(label);
+  const r = await runAsync('claude', args, { cwd });
+  if (r.status === 0) { s.succeed(typeof done === 'function' ? done(r) : done); return r; }
+  if (allowFail) { s.warn(`${label} ${c.gray('(skipped)')}`); return r; }
+  s.fail();
+  const outText = `${r.stdout}\n${r.stderr}`.trim().replace(/\x1b\[[0-9;]*m/g, '');
+  if (outText) console.log(outText.split('\n').map((l) => `    ${c.gray(l)}`).join('\n'));
+  die(`\`claude ${args.join(' ')}\` failed (exit ${r.status})`);
+}
+
+let MARKET_CACHE;
+const market = () => (MARKET_CACHE ||= loadMarketplace(REPO));
+const entry = (name) => market().plugins.find((p) => p.name === name);
+const enabledIn = (settings) => Object.entries(settings?.enabledPlugins || {}).filter(([k, v]) => v && k.endsWith(`@${MARKET}`)).map(([k]) => k.split('@')[0]);
+const enabled = (ctx) => enabledIn(readJson(ctx.settings, {}));
+
 function resolveSource() {
   const s = opt('source') || process.env.CRAFT_SOURCE;
   if (!s || s === 'github') return DEFAULT_SOURCE;
   if (s === 'local') return REPO;
-  return s;
+  return existsSync(s) ? resolve(s) : s;
 }
 function sourceCommit(source) {
-  if (existsSync(source)) return run('git', ['-C', source, 'rev-parse', 'HEAD'], { capture: true, allowFail: true }).stdout.trim() || null;
-  const r = run('git', ['ls-remote', `https://github.com/${source}.git`, 'HEAD'], { capture: true, allowFail: true });
+  if (existsSync(source)) return runSync('git', ['-C', source, 'rev-parse', 'HEAD'], { allowFail: true }).stdout.trim() || null;
+  const r = runSync('git', ['ls-remote', `https://github.com/${source}.git`, 'HEAD'], { allowFail: true });
   return r.stdout.split(/\s+/)[0] || null;
 }
-function installedVersions() {
-  const r = claude(['plugin', 'list', '--json'], { capture: true, allowFail: true });
-  try { return Object.fromEntries(JSON.parse(r.stdout).filter((p) => p.scope === 'project').map((p) => [p.id.split('@')[0], p.version])); } catch { return {}; }
+// Installs Claude Code has recorded for this scope (and, for project/local, this folder).
+// `claude plugin list --json` reports every project on the machine, so filter by path.
+function installed(ctx) {
+  const r = runSync('claude', ['plugin', 'list', '--json'], { allowFail: true });
+  let rows = [];
+  try { rows = JSON.parse(r.stdout); } catch { return {}; }
+  return Object.fromEntries(rows
+    .filter((p) => p.id.endsWith(`@${MARKET}`) && p.scope === ctx.scope && (ctx.scope === 'user' || (p.projectPath && samePath(p.projectPath, ctx.dir))))
+    .map((p) => [p.id.split('@')[0], p.version]));
 }
-function applySafeguards(plugins, lock) {
+function marketplaceKnown(ctx) {
+  const has = (p) => Boolean(readJson(p, {})?.extraKnownMarketplaces?.[MARKET]);
+  if (ctx.scope === 'project') return has(ctx.settings);
+  if (ctx.scope === 'user') return has(ctx.settings);
+  return has(ctx.settings) || has(ctxFor('project', ctx.dir).settings) || has(ctxFor('user').settings);
+}
+function isGitRepo(dir) { return runSync('git', ['-C', dir, 'rev-parse', '--is-inside-work-tree'], { allowFail: true }).status === 0; }
+function guardScope(ctx) {
+  if (ctx.scope === 'user') return;
+  if (!existsSync(ctx.dir)) die(`folder not found: ${ctx.dir}`);
+  if (samePath(ctx.dir, homedir()) || samePath(join(ctx.dir, '.claude'), CONFIG_DIR)) die(`you're in your home folder, where project settings are your global settings. Use --global, or cd into a project.`);
+}
+// Just-me installs must never show up in `git status`: add them to .git/info/exclude.
+function excludeLocalFiles(ctx) {
+  if (ctx.scope !== 'local' || !isGitRepo(ctx.dir)) return;
+  const gitDir = runSync('git', ['-C', ctx.dir, 'rev-parse', '--git-common-dir'], { allowFail: true }).stdout.trim();
+  if (!gitDir) return;
+  const exclude = resolve(ctx.dir, gitDir, 'info', 'exclude');
+  for (const f of ['.claude/settings.local.json', '.claude/craft.lock.local.json']) {
+    if (runSync('git', ['-C', ctx.dir, 'check-ignore', '-q', f], { allowFail: true }).status === 0) continue;
+    mkdirSync(dirname(exclude), { recursive: true });
+    const cur = existsSync(exclude) ? readFileSync(exclude, 'utf8') : '';
+    appendFileSync(exclude, `${cur && !cur.endsWith('\n') ? '\n' : ''}${f}\n`);
+  }
+}
+
+// Resolve what the user typed: a plugin, a bundle, or a skill (installs the plugin that ships it).
+function resolveName(name) {
+  if (entry(name)) return name;
+  const plugin = pluginForSkill(REPO, market(), name);
+  if (plugin) { ui.info(`${c.bold(name)} ships in ${c.accent(plugin)}. Claude Code installs whole plugins, so adding ${c.accent(plugin)}.`); return plugin; }
+  const near = market().plugins.map((p) => p.name).filter((n) => n.includes(name) || name.includes(n));
+  die(`nothing called "${name}".${near.length ? ` Did you mean ${near.join(', ')}?` : ''} Run \`skills list\`.`);
+}
+
+function applySafeguards(ctx, plugins, lock) {
   if (flag('no-safeguards')) return;
-  const s = readJson(settingsPath, {});
+  const s = readJson(ctx.settings, {});
   lock.safeguards ||= {};
+  let changed = false;
   for (const p of plugins) {
     const g = SAFEGUARDS[p];
     if (!g || lock.safeguards[p]) continue;
     const added = { env: [], deny: [], ask: [] };
-    for (const [k, v] of Object.entries(g.env || {})) if (!(s.env && k in s.env)) { (s.env ||= {})[k] = v; added.env.push(k); }
+    for (const [k, v] of Object.entries(g.env || {})) if (!(s.env && k in s.env)) { (s.env ||= {})[k] = v; added.env.push(k); changed = true; }
     for (const kind of ['deny', 'ask']) for (const rule of g[kind] || []) {
       s.permissions ||= {}; s.permissions[kind] ||= [];
-      if (!s.permissions[kind].includes(rule)) { s.permissions[kind].push(rule); added[kind].push(rule); }
+      if (!s.permissions[kind].includes(rule)) { s.permissions[kind].push(rule); added[kind].push(rule); changed = true; }
     }
-    if (g.options) {
-      const r = spawnSync('claude plugin configure ' + quote(`${p}@${MARKET}`) + ' --values-stdin', { cwd: projectDir, shell: true, input: JSON.stringify(g.options), encoding: 'utf8' });
-      if (r.status !== 0) console.warn(`skills: could not set ${p} options (${Object.entries(g.options).map(([k, v]) => `${k}=${v}`).join(', ')}); run \`claude plugin configure ${p}@${MARKET}\``);
-      else added.options = Object.keys(g.options);
-    }
+    if (g.options && configureOptions(p, ctx)) added.options = Object.keys(g.options);
     lock.safeguards[p] = added;
-    console.log(`  safeguard for ${p}: ${g.why}`);
+    ui.log(`  ${c.cyan('⛨')} ${c.gray(`safeguard · ${p}: ${g.why}`)}`);
   }
-  writeJson(settingsPath, s);
+  if (changed) writeJson(ctx.settings, s);
 }
-
-function removeSafeguards(lock, stillEnabled) {
+function configureOptions(p, ctx) {
+  const g = SAFEGUARDS[p];
+  const r = runSync('claude', ['plugin', 'configure', `${p}@${MARKET}`, '--values-stdin'], { cwd: ctx.dir, allowFail: true, input: JSON.stringify(g.options) });
+  if (r.status !== 0) ui.warn(`could not set ${p} options (${Object.entries(g.options).map(([k, v]) => `${k}=${v}`).join(', ')}); run \`claude plugin configure ${p}@${MARKET}\``);
+  return r.status === 0;
+}
+function removeSafeguards(ctx, lock, stillEnabled) {
   if (!lock?.safeguards) return;
-  const s = readJson(settingsPath, null);
+  const s = readJson(ctx.settings, null);
   for (const [p, added] of Object.entries(lock.safeguards)) {
     if (stillEnabled.has(p)) continue;
     if (s) {
@@ -126,168 +219,471 @@ function removeSafeguards(lock, stillEnabled) {
     }
     delete lock.safeguards[p]; // plugin options stay in your user settings; they are harmless without the plugin
   }
-  if (s) writeJson(settingsPath, s);
+  if (s) writeJson(ctx.settings, s);
   if (Object.keys(lock.safeguards).length === 0) delete lock.safeguards;
 }
-
-function cleanupSettings() {
-  const s = readJson(settingsPath, null);
+// Drop the empty keys we may have left. Never deletes your global settings file.
+function cleanupSettings(ctx) {
+  const s = readJson(ctx.settings, null);
   if (!s) return;
   if (s.permissions) {
     for (const k of ['allow', 'deny', 'ask']) if (Array.isArray(s.permissions[k]) && s.permissions[k].length === 0) delete s.permissions[k];
     if (Object.keys(s.permissions).length === 0) delete s.permissions;
   }
   for (const k of ['enabledPlugins', 'extraKnownMarketplaces', 'env']) if (s[k] && Object.keys(s[k]).length === 0) delete s[k];
-  if (Object.keys(s).length === 0) rmSync(settingsPath); else writeJson(settingsPath, s);
-  const dir = join(projectDir, '.claude');
+  if (ctx.scope === 'user') { writeJson(ctx.settings, s); return; }
+  if (Object.keys(s).length === 0) rmSync(ctx.settings); else writeJson(ctx.settings, s);
+  const dir = join(ctx.dir, '.claude');
   if (existsSync(dir) && readdirSync(dir).length === 0) rmdirSync(dir);
+}
+function writeLock(ctx, lock) {
+  if (Object.keys(lock.plugins).length) writeJson(ctx.lock, lock);
+  else if (existsSync(ctx.lock)) rmSync(ctx.lock);
+}
+
+// ---------- add / remove (shared by the commands and the picker) ----------
+// Fail with the fix, not a shell error, when Claude Code isn't installed.
+let claudeChecked = false;
+function requireClaude() {
+  if (claudeChecked) return;
+  if (runSync('claude', ['--version'], { allowFail: true }).status !== 0) die('Claude Code is not installed (or not on PATH).\nInstall it: npm i -g @anthropic-ai/claude-code   then run skills again.');
+  claudeChecked = true;
+}
+
+async function addPlugins(ctx, names) {
+  requireClaude();
+  guardScope(ctx);
+  for (const n of names) {
+    const o = OPT_IN[n];
+    if (o && !flag(o.flag)) die(`${o.warning}\n\nTo install it anyway: skills add ${n} --${o.flag}`);
+  }
+  const source = resolveSource();
+  const before = new Set(enabled(ctx));
+  if (!marketplaceKnown(ctx)) {
+    await step(`Adding the craft marketplace ${c.gray(`(${scopeName(ctx.scope)}, from ${existsSync(source) ? 'local clone' : source})`)}`,
+      ['plugin', 'marketplace', 'add', source, '--scope', ctx.scope], { cwd: ctx.dir, done: `Marketplace ${c.accent('craft')} ready ${c.gray(`(${scopeName(ctx.scope)})`)}` });
+  }
+  const requested = [];
+  for (const name of names) {
+    if (before.has(name)) { ui.ok(`${c.bold(name)} ${c.gray(`already enabled (${scopeName(ctx.scope)})`)}`); continue; }
+    requested.push(name);
+    await step(`Installing ${c.bold(name)}`, ['plugin', 'install', `${name}@${MARKET}`, '--scope', ctx.scope], {
+      cwd: ctx.dir,
+      done: (r) => { const deps = r.stdout.match(/\+ \d+ dependenc\w+: ([^)]+)/)?.[1]; return `Installed ${c.bold(name)}${deps ? c.gray(` + ${deps}`) : ''}`; },
+    });
+  }
+  const after = enabled(ctx);
+  const versions = installed(ctx);
+  const lock = readJson(ctx.lock, { lockfileVersion: 1, scope: ctx.scope, marketplace: {}, plugins: {} });
+  lock.scope = ctx.scope;
+  lock.marketplace = { name: MARKET, source, commit: sourceCommit(source) };
+  for (const p of after) {
+    const e = entry(p) || {};
+    const prev = lock.plugins[p] || { requestedBy: [] };
+    const by = new Set(prev.requestedBy);
+    if (names.includes(p)) by.add('user');
+    else if (!before.has(p)) { const via = names.filter((n) => dependencies(REPO, entry(n) || {}).includes(p)); for (const n of via.length ? via : names) by.add(n); }
+    if (!by.size) by.add('user'); // enabled before this CLI tracked it
+    lock.plugins[p] = { version: versions[p] ?? null, ...(typeof e.source === 'object' ? { upstream: e.source.url, path: e.source.path, sha: e.source.sha } : {}), requestedBy: [...by] };
+  }
+  applySafeguards(ctx, after, lock);
+  writeLock(ctx, lock);
+  excludeLocalFiles(ctx);
+  return { added: after.filter((p) => !before.has(p)), requested };
+}
+
+async function removePlugins(ctx, names) {
+  const on = enabled(ctx);
+  for (const name of names) {
+    if (!on.includes(name)) { ui.warn(`${c.bold(name)} isn't enabled ${c.gray(`(${scopeName(ctx.scope)}: ${ctx.settings})`)}`); continue; }
+    await step(`Removing ${c.bold(name)}`, ['plugin', 'uninstall', `${name}@${MARKET}`, '--scope', ctx.scope, '--prune', '-y'], {
+      cwd: ctx.dir,
+      done: (r) => { const pr = r.stdout.match(/Removed \d+ auto-installed plugins?: (.+)/)?.[1]; return `Removed ${c.bold(name)}${pr ? c.gray(` + ${pr.trim()}`) : ''}`; },
+    });
+  }
+  const still = new Set(enabled(ctx));
+  const lock = readJson(ctx.lock, null);
+  if (lock) {
+    for (const p of Object.keys(lock.plugins)) if (!still.has(p)) delete lock.plugins[p];
+    removeSafeguards(ctx, lock, still);
+    writeLock(ctx, lock);
+  }
+  // Project and just-me installs leave no trace once empty. A global marketplace entry is kept.
+  if (still.size === 0 && ctx.scope !== 'user' && readJson(ctx.settings, {})?.extraKnownMarketplaces?.[MARKET]) {
+    await step(`Removing the craft marketplace ${c.gray(`(${scopeName(ctx.scope)})`)}`, ['plugin', 'marketplace', 'remove', MARKET, '--scope', ctx.scope], { cwd: ctx.dir, allowFail: true, done: 'Marketplace entry removed' });
+  }
+  cleanupSettings(ctx);
+  return still;
+}
+
+function nextSteps(ctx) {
+  ui.blank();
+  if (ctx.scope === 'project') {
+    ui.log(`  ${c.bold('Next')}`);
+    ui.log(`  ${sym.arrow} commit ${c.cyan('.claude/settings.json')} and ${c.cyan('.claude/craft.lock.json')}`);
+    ui.log(`  ${sym.arrow} teammates and other machines run ${c.accent('skills sync')} once ${c.gray('(settings enable plugins; they don\'t download them)')}`);
+  } else if (ctx.scope === 'local') {
+    ui.log(`  ${c.bold('Next')}  ${c.gray('nothing to commit: just-me files are excluded from git')}`);
+  } else {
+    ui.log(`  ${c.bold('Next')}  ${c.gray('available in every project on this machine')}`);
+  }
+  ui.log(`  ${sym.arrow} restart Claude Code, or run ${c.accent('/reload-plugins')} in an open session`);
 }
 
 // ---------- commands ----------
-function list() {
-  const m = marketplace();
-  console.log(`Marketplace "${m.name}"\n\nBundles:`);
-  for (const p of m.plugins.filter((p) => p.category === 'bundle')) {
-    const deps = readJson(join(REPO, 'plugins', p.name, '.claude-plugin', 'plugin.json'), {}).dependencies || [];
-    console.log(`  ${p.name.padEnd(10)} = ${deps.join(' + ')}`);
-  }
-  console.log('\nOwn plugins (no dependencies):');
-  for (const p of m.plugins.filter((p) => p.category === 'own')) console.log(`  ${p.name.padEnd(10)} skills: ${ownSkills(p.name).join(', ')}`);
-  console.log('\nThird-party (pinned):');
-  for (const p of m.plugins.filter((p) => p.category === 'third-party')) console.log(`  ${p.name.padEnd(18)} ${(p.source.url || '').replace('https://github.com/', '').replace('.git', '')}@${p.source.sha.slice(0, 7)}${p.source.path ? `  /${p.source.path}` : ''}`);
-  const s = readJson(settingsPath, {});
-  const on = enabledCraft(s);
-  console.log(`\nIn ${projectDir}: ${on.length ? on.join(', ') : 'nothing from craft enabled'}`);
+async function cmdAdd() {
+  if (!positional.length) die('usage: skills add <plugin|bundle|skill>... [--global | --local] [--dir PATH] [--source github|local|PATH]');
+  const ctx = ctxFor(scopeFromFlags() || 'project');
+  const names = [...new Set(positional.map(resolveName))];
+  ui.banner(`adding to ${SCOPES[ctx.scope].label}`);
+  const { added } = await addPlugins(ctx, names);
+  summarize(ctx, added);
+  nextSteps(ctx);
 }
 
-function add(name) {
-  if (!name) die('usage: skills add <bundle|plugin|skill> [--project PATH] [--source github|local|PATH|owner/repo]');
-  let entry = pluginEntry(name);
-  if (!entry) {
-    const bundle = findSkillBundle(name);
-    if (!bundle) die(`no bundle, plugin or skill called "${name}". Run \`skills list\`.`);
-    console.log(`"${name}" ships in the "${bundle}" bundle. Claude Code installs plugins, not single skills, so adding "${bundle}".`);
-    name = bundle; entry = pluginEntry(name);
-  }
-  if (!existsSync(projectDir)) die(`project folder not found: ${projectDir}`);
-  const optIn = OPT_IN[name];
-  if (optIn && !flag(optIn.flag)) {
-    console.error(`${optIn.warning}\n\nTo install it anyway: skills add ${name} --${optIn.flag}`);
-    process.exit(1);
-  }
-  const source = resolveSource();
-  const before = new Set(enabledCraft(readJson(settingsPath, {})));
-  if (!readJson(settingsPath, {}).extraKnownMarketplaces?.[MARKET]) claude(['plugin', 'marketplace', 'add', source, '--scope', 'project']);
-  claude(['plugin', 'install', `${name}@${MARKET}`, '--scope', 'project']);
-
-  const after = enabledCraft(readJson(settingsPath, {}));
-  const versions = installedVersions();
-  const lock = readJson(lockPath, { lockfileVersion: 1, marketplace: {}, plugins: {} });
-  lock.marketplace = { name: MARKET, source, commit: sourceCommit(source) };
-  for (const p of after) {
-    const e = pluginEntry(p) || {};
-    const prev = lock.plugins[p] || { requestedBy: [] };
-    const requestedBy = new Set(prev.requestedBy);
-    if (p === name) requestedBy.add('user'); else if (!before.has(p)) requestedBy.add(name);
-    lock.plugins[p] = { version: versions[p] ?? null, ...(typeof e.source === 'object' ? { upstream: e.source.url, path: e.source.path, sha: e.source.sha } : {}), requestedBy: [...requestedBy] };
-  }
-  applySafeguards(after, lock);
-  writeJson(lockPath, lock);
-  console.log(`\nAdded ${name}${after.length > before.size + 1 ? ` (+ ${after.filter((p) => p !== name && !before.has(p)).join(', ')})` : ''}. Commit .claude/settings.json and .claude/craft.lock.json.`);
-  console.log('Each other clone runs `skills add` once, or `claude plugin install <name>@craft --scope project` per plugin (project settings enable plugins but do not download them).');
+function summarize(ctx, added) {
+  if (!added.length) return;
+  const skills = new Set(added.flatMap((p) => skillsOf(REPO, market(), p, new Set(added.filter((x) => x !== p)))));
+  ui.blank();
+  ui.box([
+    `${sym.ok} ${c.bold(`${added.length} plugin${added.length > 1 ? 's' : ''}`)} ${c.gray('·')} ${c.bold(`${skills.size} skills`)} ${c.gray(`→ ${SCOPES[ctx.scope].label}`)}`,
+    c.gray(ui.clip(added.join(', '), 70)),
+  ], c.green);
 }
 
-function remove(name) {
-  if (!name) die('usage: skills remove <bundle|plugin> [--project PATH]');
-  const on = enabledCraft(readJson(settingsPath, {}));
-  if (!on.includes(name)) die(`"${name}" is not enabled in ${settingsPath}`);
-  claude(['plugin', 'uninstall', `${name}@${MARKET}`, '--scope', 'project', '--prune', '-y']);
-  const still = new Set(enabledCraft(readJson(settingsPath, {})));
-  const lock = readJson(lockPath, null);
-  if (lock) {
-    for (const p of Object.keys(lock.plugins)) if (!still.has(p)) delete lock.plugins[p];
-    removeSafeguards(lock, still);
-    if (Object.keys(lock.plugins).length) writeJson(lockPath, lock); else rmSync(lockPath);
+async function cmdRemove() {
+  if (!positional.length) die('usage: skills remove <plugin|bundle>... [--global | --local] [--dir PATH]');
+  let scope = scopeFromFlags();
+  if (!scope) {
+    const where = ALL_SCOPES.filter((s) => positional.some((n) => enabled(ctxFor(s)).includes(n)));
+    scope = where.includes('project') ? 'project' : where[0] || 'project';
+    if (where.length > 1) ui.info(`${positional.join(', ')} is enabled in ${where.map(scopeName).join(' and ')}; removing from ${scopeName(scope)}. Pass --global or --local to choose.`);
   }
-  if (still.size === 0) claude(['plugin', 'marketplace', 'remove', MARKET, '--scope', 'project'], { allowFail: true });
-  cleanupSettings();
-  console.log(`Removed ${name}.${still.size ? ` Still enabled: ${[...still].join(', ')}` : ' No craft plugins left in this project.'}`);
+  const ctx = ctxFor(scope);
+  ui.banner(`removing from ${SCOPES[ctx.scope].label}`);
+  const still = await removePlugins(ctx, positional);
+  ui.blank();
+  ui.log(`  ${still.size ? `${c.gray('still enabled:')} ${[...still].join(', ')}` : c.gray(`no craft plugins left in ${scopeName(ctx.scope)} scope`)}`);
 }
 
-function update() {
+async function cmdUse() {
+  const id = positional[0];
+  const r = RECIPES.find((x) => x.id === id);
+  if (!r) {
+    ui.banner('scenarios');
+    for (const x of RECIPES) ui.log(`  ${c.accent(x.id.padEnd(14))} ${x.title}\n  ${' '.repeat(14)} ${c.gray(`${x.plugins.join(' + ')} · ${SCOPES[x.scope].short}`)}`);
+    ui.blank(); ui.hint('skills use <scenario> [--global | --local | --shared]');
+    if (id) die(`no scenario called "${id}"`);
+    return;
+  }
+  const ctx = ctxFor(scopeFromFlags() || r.scope);
+  ui.banner(r.title);
+  ui.log(`  ${c.gray(r.why)}`);
+  ui.log(`  ${c.gray('plugins')} ${r.plugins.map(c.accent).join(' + ')}  ${c.gray('scope')} ${SCOPES[ctx.scope].label}`);
+  ui.blank();
+  const { added } = await addPlugins(ctx, r.plugins);
+  summarize(ctx, added);
+  nextSteps(ctx);
+}
+
+// Plugins this folder's settings enable that this machine hasn't downloaded yet.
+function missingDownloads() {
+  return ['project', 'local'].flatMap((scope) => {
+    const ctx = ctxFor(scope);
+    const want = enabled(ctx);
+    if (!want.length) return [];
+    const have = installed(ctx);
+    return want.filter((p) => !(p in have)).map((p) => ({ scope, p }));
+  });
+}
+
+async function cmdSync({ banner = true } = {}) {
+  requireClaude();
+  if (banner) ui.banner('sync this machine with the project');
+  let any = false;
+  for (const scope of ['project', 'local']) {
+    const ctx = ctxFor(scope);
+    const want = enabled(ctx);
+    if (!want.length) continue;
+    any = true;
+    const have = installed(ctx);
+    const missing = want.filter((p) => !(p in have));
+    ui.log(`  ${c.bold(SCOPES[scope].label)} ${c.gray(`· ${want.length} enabled, ${missing.length} to download`)}`);
+    if (!missing.length) { ui.ok('already in sync'); continue; }
+    const decl = readJson(ctx.settings, {})?.extraKnownMarketplaces?.[MARKET]?.source;
+    const source = decl ? decl.repo || decl.path || decl.url : resolveSource();
+    const known = JSON.parse(runSync('claude', ['plugin', 'marketplace', 'list', '--json'], { allowFail: true }).stdout || '[]').some((m) => m.name === MARKET);
+    if (!known && source) await step(`Adding the craft marketplace ${c.gray(`(${source})`)}`, ['plugin', 'marketplace', 'add', source, '--scope', scope], { cwd: ctx.dir, allowFail: true, done: 'Marketplace ready' });
+    for (const p of missing) await step(`Downloading ${c.bold(p)}`, ['plugin', 'install', `${p}@${MARKET}`, '--scope', scope], { cwd: ctx.dir, done: `Installed ${c.bold(p)}` });
+    for (const p of want.filter((x) => SAFEGUARDS[x]?.options)) if (!flag('no-safeguards')) configureOptions(p, ctx);
+  }
+  if (!any) { ui.info(`no craft plugins enabled in ${projectDir}`); ui.hint('Start with `skills` (interactive) or `skills add core`.'); return; }
+  ui.blank(); ui.log(`  ${sym.arrow} restart Claude Code, or run ${c.accent('/reload-plugins')}`);
+}
+
+function statusLine() {
+  const parts = ALL_SCOPES.map((s) => [s, enabled(ctxFor(s))]).filter(([, on]) => on.length);
+  return parts.length ? parts.map(([s, on]) => `${c.gray(`${scopeName(s)}:`)} ${on.join(', ')}`).join(c.gray('  ·  ')) : c.gray('nothing from craft yet');
+}
+
+function cmdList() {
+  const m = market();
+  const on = Object.fromEntries(ALL_SCOPES.map((s) => [s, new Set(enabled(ctxFor(s)))]));
+  const tags = (n) => ALL_SCOPES.filter((s) => on[s].has(n)).map((s) => c.green(`[${scopeName(s)}]`)).join(' ');
+  ui.banner(`marketplace "${m.name}" · ${m.plugins.length} plugins`);
+  for (const cat of ['bundle', 'own', 'third-party']) {
+    ui.log(`  ${c.bold(SECTIONS[cat])}`);
+    for (const p of m.plugins.filter((x) => x.category === cat)) {
+      const n = skillsOf(REPO, m, p.name).length;
+      const pin = typeof p.source === 'object' ? c.gray(` @${p.source.sha.slice(0, 7)}`) : '';
+      ui.log(`  ${tags(p.name) ? sym.ok : c.gray('·')} ${c.accent(ui.pad(p.name, 18))}${c.gray(String(n).padStart(3) + (n === 1 ? ' skill ' : ' skills'))}  ${BLURB[p.name] || ''}${pin} ${tags(p.name)}`);
+    }
+    ui.blank();
+  }
+  ui.kv('here', projectDir, 6);
+  ui.kv('status', statusLine(), 6);
+  ui.blank();
+  ui.hint('skills info <name>  ·  skills use  ·  skills   (interactive)');
+}
+
+function cmdInfo() {
+  let name = positional[0];
+  if (!name) die('usage: skills info <plugin|bundle|skill>');
+  const m = market();
+  let e = entry(name);
+  let skillHit = null;
+  if (!e) {
+    const p = pluginForSkill(REPO, m, name);
+    if (!p) die(`nothing called "${name}". Run \`skills list\`.`);
+    skillHit = name; name = p; e = entry(p);
+  }
+  ui.banner(e.category === 'bundle' ? 'bundle' : e.category === 'own' ? 'my plugin' : 'third-party plugin');
+  ui.log(`  ${c.accent(c.bold(name))}  ${BLURB[name] || ''}`);
+  ui.blank();
+  ui.log(ui.wrap(e.description, ui.cols() - 6, '  '));
+  ui.blank();
+  if (skillHit) {
+    const s = ownSkills(REPO, name).find((x) => x.name === skillHit);
+    ui.log(`  ${c.bold(skillHit)} ${c.gray(`is in ${name}`)}`);
+    if (s) ui.log(c.gray(ui.wrap(s.description, ui.cols() - 8, '    ')));
+    ui.blank();
+  }
+  const deps = dependencies(REPO, e);
+  if (deps.length) { ui.kv('includes', deps.map(c.accent).join(', ')); }
+  const own = typeof e.source === 'string' ? ownSkills(REPO, name) : [];
+  if (own.length) {
+    ui.kv('skills', '');
+    for (const s of own) ui.log(`    ${c.bold(ui.pad(s.name, 20))}${c.gray(ui.clip(s.description.split(/ - | Use when/)[0], ui.cols() - 28))}${s.manual ? c.yellow('  /manual') : ''}`);
+  } else if (THIRD_PARTY_SKILLS[name]) ui.kv('skills', THIRD_PARTY_SKILLS[name].join(', ') || c.gray('hooks only'));
+  else if (deps.length) ui.kv('skills', `${skillsOf(REPO, m, name).length} across the included plugins`);
+  if (HOOKS[name]) ui.kv('hooks', c.yellow(HOOKS[name]));
+  if (SAFEGUARDS[name]) ui.kv('safeguard', SAFEGUARDS[name].why);
+  if (OPT_IN[name]) ui.kv('opt-in', c.red(`needs --${OPT_IN[name].flag}`));
+  if (typeof e.source === 'object') ui.kv('pinned', `${e.source.url.replace('https://github.com/', '').replace('.git', '')}@${e.source.sha.slice(0, 12)}${e.source.path ? ` /${e.source.path}` : ''}`);
+  const inB = includedIn(REPO, m, name);
+  if (inB.length) ui.kv('part of', inB.join(', '));
+  const where = ALL_SCOPES.filter((s) => enabled(ctxFor(s)).includes(name));
+  ui.kv('enabled', where.length ? c.green(where.map(scopeName).join(', ')) : c.gray('not here'));
+  ui.blank();
+  ui.log(`  ${c.gray('install')}  ${c.accent(`skills add ${name}`)}${c.gray('   --local just me · --global everywhere')}`);
+}
+
+async function cmdUpdate() {
   const dry = flag('dry-run');
-  const lock = readJson(lockPath, null);
-  if (!lock) die(`no ${lockPath}. Nothing installed with this CLI.`);
-  const source = lock.marketplace.source;
-  const head = sourceCommit(source);
-  console.log(`Marketplace ${source}: locked ${String(lock.marketplace.commit).slice(0, 7)} -> current ${String(head).slice(0, 7)}${head === lock.marketplace.commit ? ' (no change)' : ''}`);
-  // Read the marketplace at its current state: a local clone or the GitHub HEAD.
-  let current;
-  if (existsSync(source)) current = readJson(join(source, '.claude-plugin', 'marketplace.json'));
-  else current = JSON.parse(run('gh', ['api', `repos/${source}/contents/.claude-plugin/marketplace.json`, '-H', 'Accept: application/vnd.github.raw'], { capture: true }).stdout);
-  let changes = 0;
-  for (const [name, l] of Object.entries(lock.plugins)) {
-    const e = current.plugins.find((p) => p.name === name);
-    if (!e) { console.log(`  ${name}: REMOVED from marketplace`); changes++; continue; }
-    if (l.sha && e.source.sha !== l.sha) {
-      changes++;
-      const repo = e.source.url.replace('https://github.com/', '').replace(/\.git$/, '');
-      console.log(`  ${name}: ${l.sha.slice(0, 7)} -> ${e.source.sha.slice(0, 7)}  https://github.com/${repo}/compare/${l.sha}...${e.source.sha}`);
-      const r = run('gh', ['api', `repos/${repo}/compare/${l.sha}...${e.source.sha}`, '--jq', `.files[] | select(.filename | startswith("${e.source.path || ''}")) | "      \\(.status) \\(.filename) +\\(.additions)/-\\(.deletions)"`], { capture: true, allowFail: true });
-      if (r.stdout.trim()) console.log(r.stdout.trimEnd());
-    } else if (!l.sha && head !== lock.marketplace.commit) {
-      console.log(`  ${name}: own bundle, follows the marketplace commit`);
+  const scopes = scopeFromFlags() ? [scopeFromFlags()] : ALL_SCOPES.filter((s) => existsSync(ctxFor(s).lock));
+  if (!scopes.length) die('nothing installed with this CLI here or globally (no craft lockfile).');
+  ui.banner(dry ? 'update · dry run' : 'update');
+  for (const scope of scopes) {
+    const ctx = ctxFor(scope);
+    const lock = readJson(ctx.lock, null);
+    if (!lock) { ui.warn(`no lockfile for ${scopeName(scope)} (${ctx.lock})`); continue; }
+    const source = lock.marketplace.source;
+    const head = sourceCommit(source);
+    const same = head === lock.marketplace.commit;
+    ui.log(`  ${c.bold(SCOPES[scope].label)}  ${c.gray(source)}  ${String(lock.marketplace.commit).slice(0, 7)} → ${same ? c.gray('no change') : c.accent(String(head).slice(0, 7))}`);
+    let current;
+    if (existsSync(source)) current = readJson(join(source, '.claude-plugin', 'marketplace.json'));
+    else current = JSON.parse(runSync('gh', ['api', `repos/${source}/contents/.claude-plugin/marketplace.json`, '-H', 'Accept: application/vnd.github.raw']).stdout);
+    for (const [name, l] of Object.entries(lock.plugins)) {
+      const e = current.plugins.find((p) => p.name === name);
+      if (!e) { ui.warn(`${name}: removed from the marketplace`); continue; }
+      if (l.sha && e.source.sha !== l.sha) {
+        const repo = e.source.url.replace('https://github.com/', '').replace(/\.git$/, '');
+        ui.log(`    ${c.accent(name)} ${l.sha.slice(0, 7)} → ${e.source.sha.slice(0, 7)}  ${c.under(`https://github.com/${repo}/compare/${l.sha}...${e.source.sha}`)}`);
+        const r = runSync('gh', ['api', `repos/${repo}/compare/${l.sha}...${e.source.sha}`, '--jq', `.files[] | select(.filename | startswith("${e.source.path || ''}")) | "      \\(.status) \\(.filename) +\\(.additions)/-\\(.deletions)"`], { allowFail: true });
+        if (r.stdout.trim()) ui.log(c.gray(r.stdout.trimEnd()));
+      } else if (!l.sha && !same) ui.log(`    ${c.accent(name)} ${c.gray('own plugin, follows the marketplace commit')}`);
+    }
+    if (dry) continue;
+    await step('Refreshing the craft marketplace', ['plugin', 'marketplace', 'update', MARKET], { cwd: ctx.dir, done: 'Marketplace refreshed' });
+    for (const name of Object.keys(lock.plugins)) await step(`Updating ${c.bold(name)}`, ['plugin', 'update', `${name}@${MARKET}`, '--scope', scope], { cwd: ctx.dir, allowFail: true, done: `${c.bold(name)} up to date` });
+    const versions = installed(ctx);
+    lock.marketplace.commit = head;
+    for (const [name, l] of Object.entries(lock.plugins)) {
+      const e = current.plugins.find((p) => p.name === name);
+      l.version = versions[name] ?? l.version;
+      if (e && typeof e.source === 'object') l.sha = e.source.sha;
+    }
+    writeJson(ctx.lock, lock);
+  }
+  ui.blank();
+  ui.log(dry ? `  ${sym.arrow} ${c.gray('dry run, nothing changed. Run')} ${c.accent('skills update')} ${c.gray('to apply.')}` : `  ${sym.arrow} restart Claude Code, or run ${c.accent('/reload-plugins')}`);
+}
+
+function cmdDoctor() {
+  let bad = 0;
+  const check = (cond, msg, fix) => { if (cond) ui.ok(msg); else { ui.fail(msg); if (fix) ui.log(`      ${c.gray('fix:')} ${c.accent(fix)}`); bad++; } };
+  ui.banner('doctor');
+  ui.log(`  ${c.bold('Tools')}`);
+  const v = runSync('claude', ['--version'], { allowFail: true }).stdout.match(/(\d+)\.(\d+)\.(\d+)/);
+  const ver = v ? v.slice(1).map(Number) : null;
+  check(ver && (ver[0] - MIN_CLAUDE[0] || ver[1] - MIN_CLAUDE[1] || ver[2] - MIN_CLAUDE[2]) >= 0, `Claude Code ${ver ? ver.join('.') : 'not found'} ${c.gray(`(need ≥ ${MIN_CLAUDE.join('.')})`)}`, 'npm i -g @anthropic-ai/claude-code@latest');
+  const node = process.versions.node.split('.').map(Number);
+  check(node[0] >= 22, `Node ${process.versions.node} ${c.gray('(need ≥ 22)')}`, 'install Node 22 LTS');
+  check(runSync('git', ['--version'], { allowFail: true }).status === 0, 'git on PATH');
+  const gh = runSync('gh', ['--version'], { allowFail: true }).status === 0;
+  if (gh) ui.ok(`gh on PATH ${c.gray('(update --dry-run, oss-portfolio)')}`); else ui.warn(`gh not found ${c.gray('(optional: update --dry-run, oss-portfolio) https://cli.github.com')}`);
+  if (WIN) check(runSync('bash', ['--version'], { allowFail: true }).status === 0, `Git Bash ${c.gray('(some third-party hooks are sh scripts)')}`, 'install Git for Windows');
+  const m = runSync('claude', ['plugin', 'validate', REPO], { allowFail: true });
+  check(m.status === 0, `marketplace manifest validates ${c.gray(REPO)}`, `claude plugin validate ${REPO}`);
+
+  let anything = false;
+  for (const scope of ALL_SCOPES) {
+    const ctx = ctxFor(scope);
+    let settings;
+    try { settings = readJson(ctx.settings, {}); } catch (e) { ui.blank(); ui.log(`  ${c.bold(SCOPES[scope].label)}`); check(false, `${ctx.settings} is not valid JSON: ${e.message}`); continue; }
+    const on = enabledIn(settings);
+    const lock = readJson(ctx.lock, null);
+    if (!on.length && !lock) continue;
+    anything = true;
+    ui.blank();
+    ui.log(`  ${c.bold(SCOPES[scope].label)} ${c.gray(`· ${ctx.settings}`)}`);
+    check(marketplaceKnown(ctx), 'craft marketplace declared', `skills add <plugin>${scopeFlag(scope)}`);
+    if (lock) {
+      const lp = Object.keys(lock.plugins).sort().join(', '), sp = [...on].sort().join(', ');
+      check(lp === sp, `lockfile matches settings ${c.gray(`(${on.length} plugins)`)}`, `lock has [${lp}], settings has [${sp}]: run skills add/remove again`);
+    } else check(false, 'lockfile present', `skills add <plugin>${scopeFlag(scope)}`);
+    const have = installed(ctx);
+    const missing = on.filter((p) => !(p in have));
+    check(!missing.length, `${on.length - missing.length}/${on.length} plugins downloaded on this machine`, scope === 'user' ? `skills add ${missing.join(' ')} --global` : 'skills sync');
+    for (const p of on.filter((x) => SAFEGUARDS[x])) check(lock?.safeguards?.[p], `${p} safeguard ${c.gray(`(${SAFEGUARDS[p].why})`)}`, `skills remove ${p}${scopeFlag(scope)} && skills add ${p}${scopeFlag(scope)}`);
+  }
+  if (!anything) { ui.blank(); ui.info(`no craft plugins here or globally ${c.gray('— run `skills` to pick some')}`); }
+  ui.blank();
+  ui.log(bad ? `  ${sym.fail} ${c.red(`${bad} problem${bad > 1 ? 's' : ''}`)}` : `  ${sym.ok} ${c.green('all good')}`);
+  process.exitCode = bad ? 1 : 0;
+}
+
+// ---------- interactive ----------
+async function interactive() {
+  ui.banner();
+  const git = isGitRepo(projectDir);
+  const atHome = samePath(projectDir, homedir());
+  ui.kv('folder', `${c.bold(basename(projectDir) || projectDir)} ${c.gray(git ? '(git repo)' : atHome ? '(home folder)' : '(not a git repo)')}`, 7);
+  ui.kv('status', statusLine(), 7);
+  ui.blank();
+  requireClaude();
+
+  // Fresh clone or new machine: offer to download what the repo already uses, first.
+  if (!atHome) {
+    const missing = missingDownloads();
+    if (missing.length) {
+      ui.warn(`this project uses ${c.bold(missing.map((m) => m.p).join(', '))}, not downloaded on this machine yet`);
+      const yes = assumeYes || (await confirm({ message: 'Download them now?' }));
+      if (isCancel(yes)) return;
+      if (yes) { ui.blank(); await cmdSync({ banner: false }); ui.blank(); }
+      const more = await confirm({ message: 'Change which plugins this project uses?', initial: false });
+      if (isCancel(more) || !more) return;
+      ui.blank();
     }
   }
-  if (dry) { console.log(changes || head !== lock.marketplace.commit ? '\nDry run: nothing changed. Run `skills update` to apply.' : '\nUp to date.'); return; }
-  claude(['plugin', 'marketplace', 'update', MARKET]);
-  for (const name of Object.keys(lock.plugins)) claude(['plugin', 'update', `${name}@${MARKET}`, '--scope', 'project'], { allowFail: true });
-  const versions = installedVersions();
-  lock.marketplace.commit = head;
-  for (const [name, l] of Object.entries(lock.plugins)) {
-    const e = current.plugins.find((p) => p.name === name);
-    l.version = versions[name] ?? l.version;
-    if (e && typeof e.source === 'object') l.sha = e.source.sha;
+
+  const choice = await select({
+    message: 'What are you doing?',
+    options: [
+      ...RECIPES.map((r) => ({ value: r, label: r.title, hint: r.plugins.join(' + '), detail: r.why })),
+      { value: 'pick', label: 'Pick plugins myself', hint: 'browse everything', detail: 'Every bundle, my plugins and the pinned third-party ones, with what each contains.' },
+      { value: 'manage', label: 'Review or remove what\'s installed', hint: 'uncheck to remove' },
+      { value: 'doctor', label: 'Check my setup', hint: 'skills doctor' },
+    ],
+  });
+  if (isCancel(choice)) return;
+  if (choice === 'doctor') { ui.blank(); return cmdDoctor(); }
+  const recipe = typeof choice === 'object' ? choice : null;
+
+  // Where. Home folder → only global makes sense.
+  let scope;
+  if (atHome) { scope = 'user'; ui.info(`home folder, so installing ${c.bold('globally')}`); }
+  else {
+    const installedScopes = ALL_SCOPES.filter((s) => enabled(ctxFor(s)).length);
+    const initial = recipe?.scope && (recipe.scope !== 'local' || git) ? recipe.scope : choice === 'manage' && installedScopes.length ? installedScopes[0] : git ? 'project' : 'user';
+    scope = await select({
+      message: 'Install where?',
+      initial,
+      options: ['project', 'local', 'user'].map((s) => ({ value: s, label: SCOPES[s].label, hint: SCOPES[s].hint, detail: s === 'local' && !git ? 'Not a git repo, so the files can\'t be git-excluded; they still stay out of the shared settings.' : null })),
+    });
+    if (isCancel(scope)) return;
   }
-  writeJson(lockPath, lock);
-  console.log('Updated. Restart Claude Code or run /reload-plugins in open sessions.');
+  const ctx = ctxFor(scope);
+  const m = market();
+  const on = new Set(enabled(ctx));
+  const lock = readJson(ctx.lock, null);
+  const userPicked = new Set([...on].filter((p) => !lock?.plugins?.[p] || lock.plugins[p].requestedBy?.includes('user')));
+  const start = new Set([...userPicked, ...(recipe?.plugins || [])]);
+
+  const items = ['bundle', 'own', 'third-party'].flatMap((cat) => m.plugins.filter((p) => p.category === cat).map((p) => {
+    const skills = typeof p.source === 'string' ? ownSkills(REPO, p.name).map((s) => s.name) : THIRD_PARTY_SKILLS[p.name] || [];
+    const deps = dependencies(REPO, p);
+    const detail = [
+      c.dim(ui.wrap(BLURB[p.name] || p.description, ui.cols() - 8)),
+      deps.length ? `${c.gray('includes')} ${deps.join(', ')} ${c.gray(`(${skillsOf(REPO, m, p.name).length} skills)`)}` : skills.length ? `${c.gray('skills')}   ${ui.clip(skills.join(', '), ui.cols() - 14)}` : `${c.gray('skills')}   hooks only`,
+      HOOKS[p.name] ? `${c.yellow('hooks')}    ${ui.clip(HOOKS[p.name], ui.cols() - 14)}` : null,
+      SAFEGUARDS[p.name] ? `${c.cyan('guard')}    ${SAFEGUARDS[p.name].why}` : null,
+      OPT_IN[p.name] ? c.red('opt-in: you\'ll be asked to confirm') : null,
+    ].filter(Boolean).join('\n');
+    return { value: p.name, label: p.name, section: SECTIONS[cat], tag: on.has(p.name) ? '● installed' : '', hint: BLURB[p.name] || '', detail };
+  }));
+  const locked = (name, sel) => { const by = [...sel].find((b) => b !== name && dependencies(REPO, entry(b) || {}).includes(name)); return by ? `in ${by}` : null; };
+  const picked = await multiselect({ message: `Plugins for ${SCOPES[scope].label}`, items, selected: start, locked });
+  if (isCancel(picked)) return;
+
+  // Diff against what's there. Things a selected bundle already brings aren't removed.
+  const toAdd = [...picked].filter((p) => !on.has(p) || (!userPicked.has(p) && !locked(p, picked)));
+  const toRemove = [...userPicked].filter((p) => !picked.has(p) && !locked(p, picked));
+  if (!toAdd.length && !toRemove.length) { ui.blank(); ui.ok('nothing to change'); return; }
+
+  ui.blank();
+  ui.log(`  ${c.bold('Plan')} ${c.gray(`· ${SCOPES[scope].label}`)}`);
+  for (const p of toAdd) ui.log(`  ${sym.add} ${c.bold(p)} ${c.gray(`${skillsOf(REPO, m, p).length} skills${HOOKS[p] ? ' · has hooks' : ''}`)}`);
+  for (const p of toRemove) ui.log(`  ${sym.del} ${c.bold(p)}`);
+  ui.blank();
+  const optIns = toAdd.filter((p) => OPT_IN[p]);
+  for (const p of optIns) {
+    ui.log(c.yellow(OPT_IN[p].warning.split('\n').map((l) => `  ${l}`).join('\n')));
+    const yes = await confirm({ message: `Install ${p} anyway?`, initial: false });
+    if (isCancel(yes) || !yes) { toAdd.splice(toAdd.indexOf(p), 1); ui.hint(`skipping ${p}`); } else argv.push(`--${OPT_IN[p].flag}`);
+  }
+  if (!toAdd.length && !toRemove.length) return;
+  const go = assumeYes || (await confirm({ message: 'Apply?' }));
+  if (isCancel(go) || !go) { ui.hint('nothing changed'); return; }
+  ui.blank();
+  let added = [];
+  if (toRemove.length) await removePlugins(ctx, toRemove);
+  if (toAdd.length) ({ added } = await addPlugins(ctx, toAdd));
+  summarize(ctx, added);
+  if (added.length) nextSteps(ctx);
 }
 
-function doctor() {
-  let bad = 0;
-  const ok = (cond, msg, fix) => { console.log(`${cond ? 'ok  ' : 'FAIL'} ${msg}${!cond && fix ? `\n     fix: ${fix}` : ''}`); if (!cond) bad++; };
-  const v = claude(['--version'], { capture: true, allowFail: true }).stdout.match(/(\d+)\.(\d+)\.(\d+)/);
-  const ver = v ? v.slice(1).map(Number) : null;
-  ok(ver && (ver[0] - MIN_CLAUDE[0] || ver[1] - MIN_CLAUDE[1] || ver[2] - MIN_CLAUDE[2]) >= 0, `Claude Code ${ver ? ver.join('.') : 'not found'} (need >= ${MIN_CLAUDE.join('.')})`, 'npm i -g @anthropic-ai/claude-code@latest');
-  ok(run('git', ['--version'], { capture: true, allowFail: true }).status === 0, 'git on PATH');
-  ok(run('gh', ['--version'], { capture: true, allowFail: true }).status === 0, 'gh on PATH (used by update --dry-run and oss-portfolio)', 'https://cli.github.com');
-  if (process.platform === 'win32') ok(run('bash', ['--version'], { capture: true, allowFail: true }).status === 0, 'Git Bash available (some third-party hooks are sh scripts)', 'install Git for Windows');
-  let settings = null;
-  try { settings = readJson(settingsPath, {}); ok(true, `${settingsPath} is valid JSON`); } catch (e) { ok(false, `${settingsPath} is not valid JSON: ${e.message}`); }
-  if (settings) {
-    const on = enabledCraft(settings);
-    const lock = readJson(lockPath, null);
-    ok(!on.length || settings.extraKnownMarketplaces?.[MARKET], 'craft marketplace declared in project settings', 'skills add <bundle>');
-    if (lock) {
-      const lp = Object.keys(lock.plugins).sort().join(','), sp = [...on].sort().join(',');
-      ok(lp === sp, `lockfile matches settings (${on.length} plugins)`, `lock has [${lp}], settings has [${sp}]: run skills add/remove again`);
-    } else ok(!on.length, 'lockfile present', 'run skills add <bundle> to write it');
-    const installed = installedVersions();
-    for (const p of on) ok(p in installed, `${p}@craft installed on this machine`, `claude plugin install ${p}@craft --scope project`);
-    for (const p of on.filter((p) => SAFEGUARDS[p])) ok(lock?.safeguards?.[p], `${p} safeguards applied (${SAFEGUARDS[p].why})`, `skills remove ${p} && skills add ${p}, or see third_party/REVIEW.md#recommended-settings`);
-  }
-  const m = run('claude', ['plugin', 'validate', REPO], { capture: true, allowFail: true });
-  ok(m.status === 0, 'marketplace manifest validates', 'claude plugin validate .');
-  process.exit(bad ? 1 : 0);
-}
-
-function newSkill(name) {
+// ---------- authoring ----------
+function newSkill() {
+  const name = positional[0];
   const bundle = opt('bundle');
-  if (!name || !bundle) die('usage: skills new-skill <name> --bundle <bundle> [--description "..."]');
+  if (!name || !bundle) die('usage: skills new-skill <name> --bundle <plugin> [--description "..."]');
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name) || name.length > 64) die('name must be lowercase letters, digits and single hyphens, at most 64 characters');
   if (/claude|anthropic/.test(name)) die('names containing "claude" or "anthropic" are reserved');
   const pdir = join(REPO, 'plugins', bundle);
-  if (!existsSync(join(pdir, '.claude-plugin', 'plugin.json'))) die(`no bundle "${bundle}" (plugins/${bundle}/.claude-plugin/plugin.json)`);
+  if (!existsSync(join(pdir, '.claude-plugin', 'plugin.json'))) die(`no plugin "${bundle}" (plugins/${bundle}/.claude-plugin/plugin.json)`);
+  if (dependencies(REPO, entry(bundle) || {}).length) die(`"${bundle}" is a bundle with dependencies; put skills in a dependency-free plugin like craft-core`);
   const sdir = join(pdir, 'skills', name);
   if (existsSync(sdir)) die(`${sdir} already exists`);
   const desc = opt('description') || 'TODO: what this skill does, then "Use when ..." with the words a user would actually type. Third person, under 1024 characters.';
@@ -295,32 +691,38 @@ function newSkill(name) {
   const tdir = join(REPO, 'templates');
   mkdirSync(sdir, { recursive: true });
   writeFileSync(join(sdir, 'SKILL.md'), fill(readFileSync(join(tdir, 'skill', 'SKILL.md'), 'utf8')));
-  for (const c of readdirSync(join(tdir, 'evals'))) {
-    const dest = join(pdir, 'evals', `${name}-${c}`);
-    cpSync(join(tdir, 'evals', c), dest, { recursive: true });
+  for (const t of readdirSync(join(tdir, 'evals'))) {
+    const dest = join(pdir, 'evals', `${name}-${t}`);
+    cpSync(join(tdir, 'evals', t), dest, { recursive: true });
     for (const f of walk(dest)) writeFileSync(f, fill(readFileSync(f, 'utf8')));
   }
-  console.log(`Created plugins/${bundle}/skills/${name}/SKILL.md and plugins/${bundle}/evals/${name}-*`);
-  console.log(`Next (skill-creator loop):
-  1. Write the body: the steps a top professional takes, in order, under 500 lines. Put detail in sibling files.
-  2. Fill in the eval prompts: 3 that should trigger, 3 near-misses that shouldn't, 1 real task with graders.
-  3. claude plugin validate plugins/${bundle}
-  4. claude plugin eval plugins/${bundle} --case "${name}-*trigger*" --ablation none --runs 3   (did it fire when it should?)
-  5. claude plugin eval plugins/${bundle} --case "${name}-task*" --ablation with-without --runs 3   (does it beat no skill?)
-  6. Tighten the description and body until both pass, then commit.`);
+  ui.banner('new skill');
+  ui.ok(`plugins/${bundle}/skills/${name}/SKILL.md`);
+  ui.ok(`plugins/${bundle}/evals/${name}-* ${c.gray('(3 trigger, 3 near-miss, 1 task)')}`);
+  ui.blank();
+  ui.log(`  ${c.bold('Next')} ${c.gray('(the skill-creator loop)')}`);
+  [
+    'Write the body: the steps a top professional takes, in order, under 500 lines. Detail goes in sibling files.',
+    'Fill in the eval prompts: 3 that should trigger, 3 near-misses that shouldn\'t, 1 real task with graders.',
+    `claude plugin validate plugins/${bundle}`,
+    `claude plugin eval plugins/${bundle} --case "${name}-*trigger*" --ablation none --runs 1 --no-publish`,
+    `claude plugin eval plugins/${bundle} --case "${name}-task*" --ablation with-without --runs 1 --no-publish`,
+    `Try it for real: skills add ${bundle} --local --source local, then /reload-plugins after each edit.`,
+  ].forEach((s, i) => ui.log(`  ${c.accent(`${i + 1}.`)} ${s}`));
 }
 function* walk(d) { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) yield* walk(p); else yield p; } }
 
-function vet(repo) {
+function vet() {
+  const repo = positional[0];
   const sha = opt('sha'); const path = opt('path') || '';
   if (!repo || !sha) die('usage: skills vet <owner/repo> --sha <40-char commit> [--path sub/dir] [--name plugin-name]');
   if (!/^[0-9a-f]{40}$/.test(sha)) die('--sha must be a full 40-character commit SHA (pinning to a branch or tag is not reviewable)');
   const dir = join(tmpdir(), `craft-vet-${Date.now()}`);
   mkdirSync(dir, { recursive: true });
-  run('git', ['init', '-q'], { cwd: dir });
-  run('git', ['remote', 'add', 'origin', `https://github.com/${repo}.git`], { cwd: dir });
-  run('git', ['fetch', '-q', '--depth', '1', 'origin', sha], { cwd: dir });
-  run('git', ['-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: dir });
+  runSync('git', ['init', '-q'], { cwd: dir });
+  runSync('git', ['remote', 'add', 'origin', `https://github.com/${repo}.git`], { cwd: dir });
+  runSync('git', ['fetch', '-q', '--depth', '1', 'origin', sha], { cwd: dir });
+  runSync('git', ['-c', 'advice.detachedHead=false', 'checkout', '-q', 'FETCH_HEAD'], { cwd: dir });
   const root = join(dir, path);
   const r = scanTree(root);
   const name = opt('name') || (path.split('/').filter(Boolean).pop() || repo.split('/')[1]);
@@ -340,18 +742,67 @@ function vet(repo) {
   console.log(`\nChecked out at ${root}. Read the files there, then finish ${out}.`);
 }
 
-const commands = { list, add: () => add(positional[0]), remove: () => remove(positional[0]), update, doctor, 'new-skill': () => newSkill(positional[0]), vet: () => vet(positional[0]) };
-if (!commands[cmd]) {
-  console.log(`skills - manage craft plugins in a project with Claude Code's native plugin system
-
-  skills list [--project PATH]
-  skills add <bundle|plugin|skill> [--project PATH] [--source github|local|PATH|owner/repo] [--no-safeguards]
-             (impeccable also needs --accept-impeccable)
-  skills remove <bundle|plugin> [--project PATH]
-  skills update [--dry-run] [--project PATH]
-  skills doctor [--project PATH]
-  skills new-skill <name> --bundle <bundle> [--description "..."]
-  skills vet <owner/repo> --sha <commit> [--path sub/dir] [--name plugin-name]`);
-  process.exit(cmd && cmd !== 'help' && cmd !== '--help' ? 1 : 0);
+// The CLI itself: a git clone pulls, an npm install reinstalls from GitHub.
+async function selfUpdate() {
+  ui.banner('self-update');
+  if (existsSync(join(REPO, '.git'))) {
+    const s = ui.spinner(`git pull ${c.gray(REPO)}`);
+    const r = runSync('git', ['-C', REPO, 'pull', '--ff-only'], { allowFail: true });
+    if (r.status) { s.fail(); die((r.stderr || r.stdout).trim()); }
+    s.succeed(r.stdout.includes('Already up to date') ? 'already up to date' : `updated to ${runSync('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD']).stdout.trim()}`);
+  } else {
+    const s = ui.spinner(`npm i -g github:${DEFAULT_SOURCE}`);
+    const r = await runAsync('npm', ['i', '-g', `github:${DEFAULT_SOURCE}`]);
+    if (r.status) { s.fail(); die((r.stderr || r.stdout).trim()); }
+    s.succeed('reinstalled from GitHub');
+  }
+  ui.hint('Plugins update separately: skills update');
 }
-commands[cmd]();
+
+// ---------- help ----------
+function help() {
+  ui.banner();
+  const row = (a, b) => ui.log(`  ${c.accent(ui.pad(a, 40))}${c.gray(b)}`);
+  ui.log(`  ${c.bold('Pick & install')}`);
+  row('skills', 'interactive: scenario → scope → plugins');
+  row('skills use [scenario]', 'install a scenario recipe (no arg: list them)');
+  row('skills add <name>...', 'plugin, bundle or skill name');
+  row('skills remove <name>...', 'uninstall + prune unused deps');
+  ui.blank();
+  ui.log(`  ${c.bold('See')}`);
+  row('skills list', 'everything, with what\'s enabled where');
+  row('skills info <name>', 'skills, hooks, safeguards, pin');
+  row('skills doctor', 'check tools, settings, downloads');
+  ui.blank();
+  ui.log(`  ${c.bold('Keep current')}`);
+  row('skills sync', 'download what this project enables');
+  row('skills update [--dry-run]', 'marketplace + plugins, refresh lock');
+  ui.blank();
+  ui.log(`  ${c.bold('Author')}`);
+  row('skills new-skill <name> --bundle <p>', 'skill + 7 eval cases from templates');
+  row('skills vet <owner/repo> --sha <sha>', 'scan a third-party skill before pinning');
+  row('skills self-update', 'update this CLI (git clone or npm install)');
+  ui.blank();
+  ui.log(`  ${c.bold('Scope')}  ${c.gray('(default: this project, shared)')}`);
+  row('--local', 'this project, just me (git-ignored)');
+  row('--global', 'every project on this machine');
+  ui.blank();
+  ui.log(`  ${c.bold('Other')}  ${c.gray('--dir PATH · --source github|local|PATH · --no-safeguards · --yes · --accept-impeccable')}`);
+  ui.blank();
+}
+
+// ---------- main ----------
+const commands = {
+  list: cmdList, ls: cmdList, add: cmdAdd, install: cmdAdd, remove: cmdRemove, rm: cmdRemove, uninstall: cmdRemove,
+  use: cmdUse, info: cmdInfo, show: cmdInfo, sync: cmdSync, update: cmdUpdate, doctor: cmdDoctor,
+  'new-skill': newSkill, vet, help, '--help': help, '-h': help, pick: interactive, 'self-update': selfUpdate,
+};
+try {
+  if (!cmd) { if (process.stdin.isTTY || flag('interactive')) await interactive(); else help(); }
+  else if (commands[cmd]) await commands[cmd]();
+  else { help(); die(`unknown command "${cmd}"`); }
+} catch (e) {
+  if (!(e instanceof Fatal)) throw e;
+  console.error(`\n  ${sym.fail} ${e.message.split('\n').join('\n    ')}\n`);
+  process.exitCode = 1;
+}
