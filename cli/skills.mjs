@@ -13,6 +13,7 @@ import { scanTree } from './lib/scan.mjs';
 import * as ui from './lib/ui.mjs';
 import { c, sym } from './lib/ui.mjs';
 import { select, multiselect, confirm, isCancel } from './lib/picker.mjs';
+import * as completion from './lib/completion.mjs';
 import { loadMarketplace, BLURB, HOOKS, SECTIONS, RECIPES, SCOPES, ownSkills, dependencies, skillsOf, pluginForSkill, includedIn, THIRD_PARTY_SKILLS } from './lib/catalog.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -544,6 +545,13 @@ function cmdDoctor() {
   const gh = runSync('gh', ['--version'], { allowFail: true }).status === 0;
   if (gh) ui.ok(`gh on PATH ${c.gray('(update --dry-run, oss-portfolio)')}`); else ui.warn(`gh not found ${c.gray('(optional: update --dry-run, oss-portfolio) https://cli.github.com')}`);
   if (WIN) check(runSync('bash', ['--version'], { allowFail: true }).status === 0, `Git Bash ${c.gray('(some third-party hooks are sh scripts)')}`, 'install Git for Windows');
+  const shell = completion.detectShell();
+  if (completion.SHELLS.includes(shell)) {
+    const blocked = shell === 'powershell' && psInfo().find((p) => psBlocked(p.policy));
+    if (blocked) ui.warn(`${blocked.exe} blocks scripts ${c.gray(`(${blocked.policy}): no profile, no skills.ps1, no tab completion. Fix: skills completion install`)}`);
+    else if (completion.isInstalled(shell, psProfiles)) ui.ok(`tab completion ${c.gray(`(${shell})`)}`);
+    else ui.warn(`tab completion not set up for ${shell} ${c.gray('(optional: skills completion install)')}`);
+  }
   const m = runSync('claude', ['plugin', 'validate', REPO], { allowFail: true });
   check(m.status === 0, `marketplace manifest validates ${c.gray(REPO)}`, `claude plugin validate ${REPO}`);
 
@@ -759,6 +767,81 @@ async function selfUpdate() {
   ui.hint('Plugins update separately: skills update');
 }
 
+// ---------- tab completion ----------
+// Hidden: the shell scripts call this on every Tab, so it only reads local files, never `claude`.
+function completeWords() {
+  const m = market();
+  const own = new Set(m.plugins.filter((p) => p.category === 'own').map((p) => p.name));
+  const data = {
+    plugins: m.plugins.map((p) => ({ name: p.name, blurb: BLURB[p.name] || '', own: own.has(p.name) })),
+    skills: m.plugins.flatMap((p) => (typeof p.source === 'string' ? ownSkills(REPO, p.name).map((s) => s.name) : THIRD_PARTY_SKILLS[p.name] || []).map((name) => ({ name, plugin: p.name }))),
+    recipes: RECIPES,
+    enabled: (scope) => (scope ? [scope] : ALL_SCOPES).flatMap((s) => { try { return enabled(ctxFor(s)); } catch { return []; } }),
+  };
+  const out = completion.complete(argv.slice(1), data);
+  if (out.length) process.stdout.write(out.join('\n') + '\n');
+}
+
+// PowerShell keeps its profile under Documents, which OneDrive may have moved, so ask it.
+// Windows PowerShell 5.1 and PowerShell 7 each have their own profile; hook up whichever exist.
+function psInfo() {
+  return (WIN ? ['powershell', 'pwsh'] : ['pwsh']).map((exe) => {
+    const r = runSync(exe, ['-NoProfile', '-NonInteractive', '-Command', '$PROFILE.CurrentUserCurrentHost; Get-ExecutionPolicy'], { allowFail: true });
+    const [profile, policy] = r.status === 0 ? r.stdout.trim().split(/\r?\n/).map((s) => s.trim()) : [];
+    return { exe, profile, policy };
+  }).filter((p) => p.profile);
+}
+const psProfiles = () => psInfo().map((p) => p.profile);
+// Windows ships with scripts disabled, which stops profiles (and npm's skills.ps1) from loading.
+const psBlocked = (policy) => ['Restricted', 'AllSigned', 'Undefined'].includes(policy);
+
+// A profile line that can't load prints an error on every new PowerShell, so fix the policy first.
+async function allowPsScripts() {
+  const blocked = psInfo().filter((p) => psBlocked(p.policy));
+  if (!blocked.length) return;
+  const fix = 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned';
+  ui.warn(`PowerShell won't run scripts here ${c.gray(`(execution policy: ${blocked[0].policy})`)}, so it can't load completion from your profile.`);
+  ui.log(`    ${c.gray('RemoteSigned for your user lets scripts on this machine run; downloaded ones still need a signature.')}`);
+  ui.log(`    ${c.gray('It also lets PowerShell run npm\'s skills.ps1. Fix:')} ${c.accent(fix)}`);
+  if (!assumeYes) {
+    if (!process.stdin.isTTY) die(`run this in PowerShell, then try again:\n${fix}`);
+    const yes = await confirm({ message: `Run ${fix} now?`, initialValue: true });
+    if (isCancel(yes) || !yes) die(`left your execution policy alone. Run this when you're ready, then try again:\n${fix}`);
+  }
+  for (const { exe } of blocked) runSync(exe, ['-NoProfile', '-NonInteractive', '-Command', `${fix} -Force`], { allowFail: true });
+  const still = psInfo().filter((p) => psBlocked(p.policy));
+  if (still.length) die(`${still.map((p) => p.exe).join(' and ')} still blocks scripts (${still[0].policy}). A group policy may be setting it; ask your admin.`);
+  ui.ok(`execution policy ${c.gray('RemoteSigned (current user)')}`);
+}
+
+async function cmdCompletion() {
+  const [what, which] = positional;
+  if (completion.SHELLS.includes(what)) { process.stdout.write(completion.script(what)); return; }
+  const shell = which || completion.detectShell();
+  if (!completion.SHELLS.includes(shell)) die(`no completion for "${shell}". Pick one of: ${completion.SHELLS.join(', ')}`);
+  if (what === 'install') {
+    if (shell === 'powershell') await allowPsScripts();
+    const { file, rcs, changed } = completion.install(shell, psProfiles);
+    if (shell === 'powershell' && !rcs.length) die('could not find a PowerShell profile path (is powershell or pwsh on PATH?)');
+    ui.ok(`tab completion for ${c.bold(shell)} ${c.gray(file)}`);
+    for (const rc of rcs) ui.log(`  ${changed.includes(rc) ? sym.ok : c.gray('·')} ${changed.includes(rc) ? 'loaded from' : c.gray('already in')} ${c.gray(rc)}`);
+    ui.blank(); ui.hint(`open a new terminal, then try: skills add <Tab>`);
+    return;
+  }
+  if (what === 'uninstall') {
+    const changed = completion.uninstall(shell, psProfiles);
+    if (changed.length) for (const f of changed) ui.ok(`removed from ${c.gray(f)}`); else ui.info(`tab completion for ${shell} was not installed`);
+    return;
+  }
+  if (what) die(`usage: skills completion [install | uninstall] [${completion.SHELLS.join(' | ')}]`);
+  ui.banner('tab completion');
+  ui.log(`  ${c.accent(ui.pad('skills completion install', 40))}${c.gray(`set it up for ${shell} (detected)`)}`);
+  ui.log(`  ${c.accent(ui.pad('skills completion install <shell>', 40))}${c.gray(completion.SHELLS.join(', '))}`);
+  ui.log(`  ${c.accent(ui.pad('skills completion <shell>', 40))}${c.gray('print the script, to wire up yourself')}`);
+  ui.log(`  ${c.accent(ui.pad('skills completion uninstall', 40))}${c.gray('take it out again')}`);
+  ui.blank();
+}
+
 // ---------- help ----------
 function help() {
   ui.banner();
@@ -782,6 +865,7 @@ function help() {
   row('skills new-skill <name> --bundle <p>', 'skill + 7 eval cases from templates');
   row('skills vet <owner/repo> --sha <sha>', 'scan a third-party skill before pinning');
   row('skills self-update', 'update this CLI (git clone or npm install)');
+  row('skills completion install', 'Tab-complete commands, plugins, skills, flags');
   ui.blank();
   ui.log(`  ${c.bold('Scope')}  ${c.gray('(default: this project, shared)')}`);
   row('--local', 'this project, just me (git-ignored)');
@@ -796,6 +880,7 @@ const commands = {
   list: cmdList, ls: cmdList, add: cmdAdd, install: cmdAdd, remove: cmdRemove, rm: cmdRemove, uninstall: cmdRemove,
   use: cmdUse, info: cmdInfo, show: cmdInfo, sync: cmdSync, update: cmdUpdate, doctor: cmdDoctor,
   'new-skill': newSkill, vet, help, '--help': help, '-h': help, pick: interactive, 'self-update': selfUpdate,
+  completion: cmdCompletion, __complete: completeWords,
 };
 try {
   if (!cmd) { if (process.stdin.isTTY || flag('interactive')) await interactive(); else help(); }

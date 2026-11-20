@@ -107,6 +107,8 @@ Needs **Node 22+**, **git**, and **Claude Code ≥ 2.1.300** (`npm i -g @anthrop
 
 Then `skills doctor` checks everything. The CLI is small; the skills themselves install from GitHub through Claude Code, pinned by the lockfile. `npm link` makes `skills` run straight from your clone, so `skills new-skill` and `--source local` work on your edits. No PATH editing on any OS.
 
+**Tab completion** (optional): `skills completion install` sets it up for the shell you're in: bash, zsh, fish or PowerShell. After that, `skills add cr<Tab>` completes plugin and skill names, `skills use <Tab>` lists scenarios, and `--<Tab>` shows the flags that command takes, with descriptions where the shell can show them. Names are read from the marketplace each time you press Tab, so new plugins show up without reinstalling.
+
 <details>
 <summary><b>Without the CLI</b> (another machine, or just checking the marketplace works)</summary>
 
@@ -221,6 +223,7 @@ Skills trigger on their own when what you type matches their description. These 
 | `skills new-skill <name> --bundle <plugin>` | New SKILL.md + 7 eval cases from `templates/` |
 | `skills vet <owner/repo> --sha <sha>` | Scan a third-party skill before pinning it |
 | `skills self-update` | Update the CLI itself: `git pull` for a clone, reinstall from GitHub for an npm install |
+| `skills completion install [shell]` | Tab completion for bash, zsh, fish or PowerShell (detected if you leave it out). `skills completion uninstall` removes it; `skills completion <shell>` prints the script |
 
 | Flag | Effect |
 |---|---|
@@ -268,6 +271,8 @@ Two things stay manual: decline ponytail's offer to add a statusLine, and declin
 | "you're in your home folder" | Project settings there *are* your global settings. Use `--global`, or `cd` into a project |
 | `skills: command not found` | Open a new terminal after `npm i -g`. Still missing? `npm prefix -g` must be on PATH (nvm/fnm set this up) |
 | "Claude Code is not installed" | `npm i -g @anthropic-ai/claude-code`, then `skills` again |
+| Tab does nothing in PowerShell | Windows ships with scripts disabled, so profiles don't load. `skills completion install` offers the fix (`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`); `skills doctor` reports it |
+| Tab does nothing after install | Open a new terminal. bash also needs `~/.bashrc` to be loaded: macOS login shells read `~/.bash_profile` |
 | Arrow keys don't work in Git Bash | mintty has no real TTY; answer the numbered prompts, or use Windows Terminal / `winpty skills` |
 | Lockfile doesn't match settings | Someone edited settings by hand. `skills remove <x>` then `skills add <x>` in that scope |
 | Want to see what a plugin does before installing | `skills info <name>`, or the details pane in `skills` |
