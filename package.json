@@ -1,0 +1,21 @@
+{
+  "name": "craft-skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "My Claude Code skills marketplace and the `skills` CLI that installs them per project, just for me, or globally.",
+  "license": "MIT",
+  "repository": "github:notsubash/claude-skills",
+  "bin": {
+    "skills": "cli/skills.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    ".claude-plugin/",
+    "bin/",
+    "cli/",
+    "plugins/",
+    "templates/"
+  ]
+}
