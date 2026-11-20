@@ -16,16 +16,18 @@ export function newer(a, b) {
   return false;
 }
 
-// The latest published (non-draft, non-prerelease) release, as "1.2.3".
+// The latest published (non-draft, non-prerelease) release, as "1.2.3", or null if there is none.
+// github.com/<repo>/releases/latest redirects to .../releases/tag/<tag>. Unlike api.github.com it
+// isn't capped at 60 requests an hour per IP, which a shared office or VPN address runs out of.
 export async function latest(repo, timeout = 5000) {
-  const r = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
-    headers: { accept: 'application/vnd.github+json', 'user-agent': 'craft-skills-cli' },
+  const r = await fetch(`https://github.com/${repo}/releases/latest`, {
+    redirect: 'manual',
+    headers: { 'user-agent': 'craft-skills-cli' },
     signal: AbortSignal.timeout(timeout),
   });
-  if (r.status === 404) return null; // no release yet
-  if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
-  const tag = (await r.json()).tag_name;
-  return parse(tag).length === 3 ? tag.replace(/^v/, '') : null;
+  if (r.status < 300 || r.status >= 400) throw new Error(`GitHub answered ${r.status}`);
+  const tag = decodeURIComponent((r.headers.get('location') || '').match(/\/releases\/tag\/([^/?#]+)$/)?.[1] || '');
+  return parse(tag).length === 3 ? tag.replace(/^v/, '') : null; // no tag in the redirect: no release yet
 }
 
 const readCache = (file) => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } };
