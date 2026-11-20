@@ -8,23 +8,26 @@ Everything works in PowerShell and in bash.
 
 | Bundle | You get | Install |
 |---|---|---|
-| **core** | `craft-core` (senior-pr, security-gate, project-docs, product-lens, deepen + the first-prompt hook and the push guard), [superpowers](https://github.com/obra/superpowers), [Matt Pocock's](https://github.com/mattpocock/skills) grill-with-docs / grilling / domain-modeling / codebase-design / to-spec / to-tickets, and [ponytail](https://github.com/DietrichGebert/ponytail) | `skills add core` |
+| **core** | `craft-core` (senior-pr, security-gate, project-docs, product-lens, deepen + the first-prompt hook, the push guard and the `terse` output style), `ops` (bug-triage, observability, dep-upgrade, release, maintenance-routine), [superpowers](https://github.com/obra/superpowers), [Matt Pocock's](https://github.com/mattpocock/skills) grill-with-docs / grilling / domain-modeling / codebase-design / to-spec / to-tickets, and [ponytail](https://github.com/DietrichGebert/ponytail) | `skills add core` |
 | **web** | `craft-web` (ui-pipeline), [stageshow](https://github.com/benjitaylor/skills), [charles-unslop and charles-polish](https://github.com/LemonFace0309/charles-skills), [emil-design-eng](https://github.com/emilkowalski/skills), [playwright-cli](https://github.com/microsoft/playwright-cli). [impeccable](https://github.com/pbakaus/impeccable) is opt-in, see below | `skills add web` |
 | **security** | Anthropic's [security-guidance](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance) hooks and Cloudflare's [security-audit](https://github.com/cloudflare/security-audit-skill) | `skills add security` |
 | **oss** | oss-contribute, oss-portfolio | `skills add oss` |
 | **writing** | human-voice, figure-check | `skills add writing` |
+| **ops** | bug-triage, observability, dep-upgrade (7-day release-age cooldown), release, maintenance-routine. Also part of core | `skills add ops` |
 
 `skills list` prints the full list, with each third-party pin. Every third-party plugin also installs on its own (`skills add playwright-cli`). Your own skills install by the plugin that contains them: `skills add senior-pr` installs `craft-core`, since Claude Code installs plugins, not single skills.
 
 ### The workflow these encode
 
 1. **Think:** the `deepen` hook rewrites your first prompt of each session into a deeper one and waits for your OK. Then `grill-with-docs` interviews you and records ADRs and a glossary.
-2. **Decide what to build:** `product-lens` checks evidence versus assumptions, the user and the job, the riskiest assumption and a cheap test, one metric with a baseline and target, and the smallest scope, then makes a build, test-first or don't-build call.
+2. **Decide what to build:** `product-lens` works like a product-minded engineer: evidence versus assumptions, a specific user and problem statement, an outcome metric with guardrails, options including do nothing, the appetite, a thin slice with rabbit holes and no-gos, and an experiment with a kill criterion, then a build, test-first or don't-build call. It also reviews specs, preps customer interviews (past behavior, not opinions) and frames tech debt as a product tradeoff.
 3. **Document:** `project-docs` sets up a lean CLAUDE.md, PRODUCT.md, decision log, ADRs and backlog.
 4. **Plan:** superpowers `brainstorming`, then `writing-plans`, or Matt's `to-spec` and `to-tickets`.
 5. **Build:** superpowers `test-driven-development` and `subagent-driven-development`, `domain-modeling` and `codebase-design` for DDD and deep modules, and ponytail to keep it simple.
 6. **UI:** `ui-pipeline` runs impeccable (when installed; otherwise a built-in critique), then stageshow, then charles-unslop, then emil-design-eng, verified with playwright-cli screenshots.
 7. **Ship:** `security-gate` writes a CLEARED or BLOCKED report, the push guard checks it on `git push` and `gh pr create`, and `senior-pr` writes the commits and PR.
+8. **Release:** `release` versions, writes the changelog, checks migrations are expand/contract, rolls out progressively with rollback triggers set in advance, and schedules flag cleanup.
+9. **Run it:** `observability` (wide events, SLOs, burn-rate alerts), `bug-triage` (report → failing test → fix → data repair → reply), `dep-upgrade` (nothing younger than 7 days, install scripts off, lockfile review, compromise response) and `maintenance-routine` (weekly, monthly and quarterly checks with a RAG report, on a schedule).
 
 ## Set up the CLI (once)
 
@@ -89,8 +92,9 @@ Every third-party plugin was read line by line before adoption ([third_party/REV
 |---|---|
 | `CRAFT_DEEPEN=off` | Turns off the first-prompt deepen hook everywhere. A prompt starting with `!raw` turns it off for that session. |
 | `CRAFT_SECURITY_GATE=warn` (default), `enforce`, `off` | Push guard: warn when HEAD has no CLEARED report, block it, or stay silent. |
+| Output style `craft-core:terse` | Short, no-filler replies: answer first, one recommendation, no recap, never drops warnings or failures. Opt-in: pick it in `/config` → Output style, or set `"outputStyle": "craft-core:terse"` in settings. |
 
-Put them in your shell profile, or in the `env` block of `~/.claude/settings.json`.
+Put the `CRAFT_*` switches in your shell profile, or in the `env` block of `~/.claude/settings.json`.
 
 ## Create your own skill
 
@@ -110,6 +114,15 @@ This creates `plugins/craft-core/skills/api-contract/SKILL.md` from `templates/s
    claude plugin eval plugins/craft-core --case "api-contract-task*" --ablation with-without --runs 3 --no-publish
    ```
 5. **Iterate** on the description and body until triggers pass and the task beats the no-skill baseline. `node scripts/ci-check.mjs` enforces the eval coverage.
+
+### What evals are, and what they cost
+
+An eval runs real Claude sessions against prompts and scores them: did the skill load when it should (trigger), stay out when it shouldn't (near-miss), and does a real task score higher with the skill than without it (the Δ in [evals/REPORT.md](evals/REPORT.md))? It's the only check that the skill changes behavior, not just that the file is valid.
+
+- **Locally, logged in with a Claude plan** (`claude auth login`), runs use your plan's usage limits. No separate bill. The "$" in the report is the list-price estimate of the same tokens.
+- **In CI**, the eval job needs an `ANTHROPIC_API_KEY` secret, which is billed per token. It only runs when you start the workflow by hand with `evals` ticked.
+- **Free checks run on every push:** `claude plugin validate`, `scripts/ci-check.mjs` (frontmatter, pins, that eval cases exist) and `scripts/install-test.mjs`.
+- Roughly 24 runs per skill (3 trigger + 3 near-miss + task with and without, 3 runs each); one skill was about $2.40 at list price. Narrow it with `--case "<skill>-*"` and `--runs 1` while iterating, and do the full run once before merging.
 
 Bundles with dependencies (`core`, `web`) must not contain skills, because `claude plugin eval` can't load a plugin whose dependencies are missing. Skills go in the dependency-free `craft-*` plugins, and the bundle depends on them.
 

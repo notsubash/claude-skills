@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        plugin: [craft-core, craft-web, oss, writing]
+        plugin: [craft-core, craft-web, oss, writing, ops]
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "craft",
   "description": "Personal Claude Code skills: my own bundles plus third-party skills pinned to reviewed commits.",
   "owner": {
@@ -10,13 +10,13 @@
     {
       "name": "core",
       "source": "./plugins/core",
-      "description": "Bundle for every project: craft-core (senior PRs, project docs, product lens, security gate, deepen hook) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
+      "description": "Bundle for every project: craft-core (senior PRs, project docs, product lens, security gate, deepen hook), ops (bug triage, observability, dependency updates, releases, maintenance) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
       "category": "bundle"
     },
     {
       "name": "craft-core",
       "source": "./plugins/craft-core",
-      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, product-lens, deepen (+ first-prompt hook, push guard).",
+      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, product-lens, deepen (+ first-prompt hook, push guard, terse output style).",
       "category": "own"
     },
     {
@@ -47,6 +47,12 @@
       "name": "writing",
       "source": "./plugins/writing",
       "description": "Writing in your own voice, and a figure check that recomputes every number you publish.",
+      "category": "own"
+    },
+    {
+      "name": "ops",
+      "source": "./plugins/ops",
+      "description": "Running an app after launch: bug triage, observability, dependency updates with a 7-day supply-chain cooldown, releases, and a scheduled maintenance routine.",
       "category": "own"
     },
     {
