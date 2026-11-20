@@ -3,8 +3,10 @@
 // (each shell's own way of asking for completions) and checks what comes back.
 // Needs `skills` on PATH (CI installs it with npm i -g first). Shells that aren't installed are skipped.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { complete } from '../cli/lib/completion.mjs';
+import { existsSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { complete, install, targets, refresh, script } from '../cli/lib/completion.mjs';
 
 const WIN = process.platform === 'win32';
 let failed = 0;
@@ -29,7 +31,27 @@ check('remove offers what is enabled in that scope', names(['remove', '--global'
 check('--bundle offers own plugins', names(['new-skill', 'x', '--bundle', '_']).join(' ') === 'craft-core', names(['new-skill', 'x', '--bundle', '_']));
 check('use takes one scenario, then flags', names(['use', 'everyday', '_'])[0]?.startsWith('--'), names(['use', 'everyday', '_']));
 
-// 2. Real shells.
+// 2. Installing: startup files and hook refresh, in a throwaway home.
+{
+  const home = mkdtempSync(join(tmpdir(), 'skills-home-'));
+  const saved = Object.fromEntries(['HOME', 'USERPROFILE', 'XDG_CONFIG_HOME', 'ZDOTDIR'].map((k) => [k, process.env[k]]));
+  Object.assign(process.env, { HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: join(home, '.config') });
+  delete process.env.ZDOTDIR;
+  writeFileSync(join(home, '.bash_profile'), 'export EDITOR=vi\n'); // macOS style: never loads ~/.bashrc
+  const { file, rcs } = install('bash');
+  check('bash: hooks ~/.bashrc and a login file that skips it', rcs.length === 2 && rcs.every((f) => readFileSync(f, 'utf8').includes('craft-skills')), rcs);
+  rmSync(join(home, '.bash_profile'));
+  writeFileSync(join(home, '.profile'), 'if [ -f "$HOME/.bashrc" ]; then . "$HOME/.bashrc"; fi\n');
+  check('bash: leaves a login file alone that already loads ~/.bashrc', targets('bash').rcs.length === 1, targets('bash').rcs);
+  writeFileSync(file, '# old hook\n');
+  const first = refresh(), second = refresh();
+  check('refresh rewrites a stale hook, once', first.join() === 'bash' && !second.length && readFileSync(file, 'utf8') === script('bash'), { first, second });
+  check('refresh leaves shells without a hook alone', !existsSync(targets('zsh').file), targets('zsh').file);
+  for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+  rmSync(home, { recursive: true, force: true });
+}
+
+// 3. Real shells.
 const run = (bin, args, input) => spawnSync(bin, args, { encoding: 'utf8', input, shell: false, timeout: 60000 });
 const gitBash = 'C:\\Program Files\\Git\\bin\\bash.exe';
 const bash = WIN ? (existsSync(gitBash) ? gitBash : null) : 'bash'; // on Windows, plain `bash` may be WSL
