@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="572" viewBox="0 0 920 572" role="img" aria-label="Running skills: pick a scenario, choose just-me scope, check craft-core, install">
+<style>.f{opacity:0}.f15{opacity:1}text{font-family:ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace}@keyframes f0{0%{opacity:1}4.970%{opacity:0}100%{opacity:0}}.f0{animation:f0 18.11s step-end infinite}@keyframes f1{0%{opacity:0}4.970%{opacity:1}5.577%{opacity:0}100%{opacity:0}}.f1{animation:f1 18.11s step-end infinite}@keyframes f2{0%{opacity:0}5.577%{opacity:1}6.184%{opacity:0}100%{opacity:0}}.f2{animation:f2 18.11s step-end infinite}@keyframes f3{0%{opacity:0}6.184%{opacity:1}6.792%{opacity:0}100%{opacity:0}}.f3{animation:f3 18.11s step-end infinite}@keyframes f4{0%{opacity:0}6.792%{opacity:1}7.399%{opacity:0}100%{opacity:0}}.f4{animation:f4 18.11s step-end infinite}@keyframes f5{0%{opacity:0}7.399%{opacity:1}8.007%{opacity:0}100%{opacity:0}}.f5{animation:f5 18.11s step-end infinite}@keyframes f6{0%{opacity:0}8.007%{opacity:1}8.614%{opacity:0}100%{opacity:0}}.f6{animation:f6 18.11s step-end infinite}@keyframes f7{0%{opacity:0}8.614%{opacity:1}10.547%{opacity:0}100%{opacity:0}}.f7{animation:f7 18.11s step-end infinite}@keyframes f8{0%{opacity:0}10.547%{opacity:1}19.382%{opacity:0}100%{opacity:0}}.f8{animation:f8 18.11s step-end infinite}@keyframes f9{0%{opacity:0}19.382%{opacity:1}30.425%{opacity:0}100%{opacity:0}}.f9{animation:f9 18.11s step-end infinite}@keyframes f10{0%{opacity:0}30.425%{opacity:1}35.947%{opacity:0}100%{opacity:0}}.f10{animation:f10 18.11s step-end infinite}@keyframes f11{0%{opacity:0}35.947%{opacity:1}45.886%{opacity:0}100%{opacity:0}}.f11{animation:f11 18.11s step-end infinite}@keyframes f12{0%{opacity:0}45.886%{opacity:1}51.408%{opacity:0}100%{opacity:0}}.f12{animation:f12 18.11s step-end infinite}@keyframes f13{0%{opacity:0}51.408%{opacity:1}62.452%{opacity:0}100%{opacity:0}}.f13{animation:f13 18.11s step-end infinite}@keyframes f14{0%{opacity:0}62.452%{opacity:1}69.630%{opacity:0}100%{opacity:0}}.f14{animation:f14 18.11s step-end infinite}@keyframes f15{0%{opacity:0}69.630%{opacity:1}100%{opacity:1}}.f15{animation:f15 18.11s step-end infinite}@media (prefers-reduced-motion:reduce){.f{animation:none!important;opacity:0}.f15{opacity:1}}</style>
+<rect width="920" height="572" rx="12" fill="#121418"/>
+<rect width="920" height="38" rx="12" fill="#1b1e24"/><rect y="26" width="920" height="12" fill="#1b1e24"/>
+<circle cx="24" cy="19" r="6" fill="#ff5f57"/><circle cx="44" cy="19" r="6" fill="#febc2e"/><circle cx="64" cy="19" r="6" fill="#28c840"/>
+<text x="460" y="24" text-anchor="middle" font-size="12" fill="#5d6570" font-family="ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace">skills — acme-api</text>
+<g class="f f0"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0"></tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f1"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">s</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f2"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">sk</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f3"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">ski</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f4"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skil</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f5"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skill</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f6"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan><tspan fill="#f5a623">▍</tspan></text></g>
+<g class="f f7"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text></g>
+<g class="f f8"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#5d6570">  ↑↓ move · enter select · esc cancel</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ❯ </tspan><tspan fill="#ffffff" font-weight="700">My own project, the full workflow</tspan><tspan fill="#5d6570">  core</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Existing repo, I just want clean PRs + a security gate</tspan><tspan fill="#5d6570">  craft-core</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Frontend / UI work</tspan><tspan fill="#5d6570">  core + web</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    App is in production</tspan><tspan fill="#5d6570">  ops</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Security review before shipping</tspan><tspan fill="#5d6570">  craft-core + security</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Contributing to someone else's open-source repo</tspan><tspan fill="#5d6570">  oss + craft-core</tspan></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Writing posts, replies, applications, charts</tspan><tspan fill="#5d6570">  writing</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Pick plugins myself</tspan><tspan fill="#5d6570">  browse everything</tspan></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"></text>
+<text x="28" y="404" font-size="14" xml:space="preserve"><tspan fill="#8b939e">    Think → decide → plan → build → ship → run. The default for anything you own.</tspan></text></g>
+<g class="f f9"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#5d6570">  ↑↓ move · enter select · esc cancel</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    My own project, the full workflow</tspan><tspan fill="#5d6570">  core</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ❯ </tspan><tspan fill="#ffffff" font-weight="700">Existing repo, I just want clean PRs + a security gate</tspan><tspan fill="#5d6570">  craft-core</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Frontend / UI work</tspan><tspan fill="#5d6570">  core + web</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    App is in production</tspan><tspan fill="#5d6570">  ops</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Security review before shipping</tspan><tspan fill="#5d6570">  craft-core + security</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Contributing to someone else's open-source repo</tspan><tspan fill="#5d6570">  oss + craft-core</tspan></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Writing posts, replies, applications, charts</tspan><tspan fill="#5d6570">  writing</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    Pick plugins myself</tspan><tspan fill="#5d6570">  browse everything</tspan></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"></text>
+<text x="28" y="404" font-size="14" xml:space="preserve"><tspan fill="#8b939e">    Only my own skills, no third-party hooks, and nothing committed to the repo.</tspan></text></g>
+<g class="f f10"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#5d6570">  ↑↓ move · enter select · esc cancel</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ❯ </tspan><tspan fill="#ffffff" font-weight="700">this project (shared)</tspan><tspan fill="#5d6570">  .claude/settings.json — commit it, the team gets the same skills</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    this project (just me)</tspan><tspan fill="#5d6570">  .claude/settings.local.json — git-ignored, nothing to commit</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    everywhere (global)</tspan><tspan fill="#5d6570">  ~/.claude/settings.json — every project on this machine</tspan></text></g>
+<g class="f f11"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#5d6570">  ↑↓ move · enter select · esc cancel</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    this project (shared)</tspan><tspan fill="#5d6570">  .claude/settings.json — commit it, the team gets the same skills</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ❯ </tspan><tspan fill="#ffffff" font-weight="700">this project (just me)</tspan><tspan fill="#5d6570">  .claude/settings.local.json — git-ignored, nothing to commit</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#d7dae0">    everywhere (global)</tspan><tspan fill="#5d6570">  ~/.claude/settings.json — every project on this machine</tspan></text></g>
+<g class="f f12"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#f5a623"> this project (just me)</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Plugins for this project (just me)</tspan><tspan fill="#5d6570">  space toggle · enter confirm · esc cancel</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  BUNDLES</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">core          </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">The everyday stack: craft-core + ops + superpowers + …</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">web           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">UI/UX stack: craft-web + stageshow + charles + emil + …</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  MY PLUGINS</tspan></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#f5a623">❯ </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#ffffff" font-weight="700">craft-core    </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Senior PRs, security gate, project docs, product lens, deepen</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">ops           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Bug triage, observability, dependency updates, releases</tspan></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">oss           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Contribute upstream the maintainers' way</tspan></text>
+<text x="28" y="404" font-size="14" xml:space="preserve"></text>
+<text x="28" y="424" font-size="14" xml:space="preserve"><tspan fill="#5d6570">    skills   </tspan><tspan fill="#d7dae0">deepen, product-lens, project-docs, security-gate, senior-pr</tspan></text>
+<text x="28" y="444" font-size="14" xml:space="preserve"><tspan fill="#d6a32e">    hooks    </tspan><tspan fill="#d7dae0">first-prompt deepen + push guard on git push / gh pr create</tspan></text>
+<text x="28" y="464" font-size="14" xml:space="preserve"></text>
+<text x="28" y="484" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  selected: </tspan><tspan fill="#5d6570">nothing</tspan></text></g>
+<g class="f f13"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#f5a623"> this project (just me)</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Plugins for this project (just me)</tspan><tspan fill="#5d6570">  space toggle · enter confirm · esc cancel</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  BUNDLES</tspan></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">core          </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">The everyday stack: craft-core + ops + superpowers + …</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">web           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">UI/UX stack: craft-web + stageshow + charles + emil + …</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  MY PLUGINS</tspan></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#f5a623">❯ </tspan><tspan fill="#3fb950">◉ </tspan><tspan fill="#ffffff" font-weight="700">craft-core    </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Senior PRs, security gate, project docs, product lens, deepen</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">ops           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Bug triage, observability, dependency updates, releases</tspan></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  </tspan><tspan fill="#5d6570">○ </tspan><tspan fill="#d7dae0">oss           </tspan><tspan fill="#5d6570">    </tspan><tspan fill="#5d6570">Contribute upstream the maintainers' way</tspan></text>
+<text x="28" y="404" font-size="14" xml:space="preserve"></text>
+<text x="28" y="424" font-size="14" xml:space="preserve"><tspan fill="#5d6570">    skills   </tspan><tspan fill="#d7dae0">deepen, product-lens, project-docs, security-gate, senior-pr</tspan></text>
+<text x="28" y="444" font-size="14" xml:space="preserve"><tspan fill="#d6a32e">    hooks    </tspan><tspan fill="#d7dae0">first-prompt deepen + push guard on git push / gh pr create</tspan></text>
+<text x="28" y="464" font-size="14" xml:space="preserve"></text>
+<text x="28" y="484" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  selected: </tspan><tspan fill="#3fb950">craft-core</tspan></text></g>
+<g class="f f14"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#f5a623"> this project (just me)</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Plugins for this project (just me)</tspan><tspan fill="#f5a623"> craft-core</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#ffffff" font-weight="700">  Plan</tspan><tspan fill="#5d6570"> · this project (just me)</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  + </tspan><tspan fill="#ffffff" font-weight="700">craft-core</tspan><tspan fill="#5d6570"> 5 skills · has hooks</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Apply?</tspan><tspan fill="#5d6570"> (Y/n) </tspan><tspan fill="#3fb950">yes</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ⠹ </tspan><tspan fill="#d7dae0">Installing </tspan><tspan fill="#ffffff" font-weight="700">craft-core</tspan></text></g>
+<g class="f f15"><text x="28" y="64" font-size="14" xml:space="preserve"><tspan fill="#39c5cf">~/work/acme-api </tspan><tspan fill="#8b939e">$ </tspan><tspan fill="#d7dae0">skills</tspan></text>
+<text x="28" y="84" font-size="14" xml:space="preserve"></text>
+<text x="28" y="104" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  ◆ </tspan><tspan fill="#ffffff" font-weight="700">craft</tspan><tspan fill="#5d6570"> — </tspan><tspan fill="#8b939e">skills for Claude Code</tspan></text>
+<text x="28" y="124" font-size="14" xml:space="preserve"></text>
+<text x="28" y="144" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  folder  </tspan><tspan fill="#d7dae0" font-weight="700">acme-api</tspan><tspan fill="#5d6570"> (git repo)</tspan></text>
+<text x="28" y="164" font-size="14" xml:space="preserve"><tspan fill="#5d6570">  status  </tspan><tspan fill="#5d6570">global: </tspan><tspan fill="#d7dae0">writing</tspan></text>
+<text x="28" y="184" font-size="14" xml:space="preserve"></text>
+<text x="28" y="204" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">What are you doing?</tspan><tspan fill="#f5a623"> Existing repo, I just want clean PRs + a security gate</tspan></text>
+<text x="28" y="224" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Install where?</tspan><tspan fill="#f5a623"> this project (just me)</tspan></text>
+<text x="28" y="244" font-size="14" xml:space="preserve"><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">Plugins for this project (just me)</tspan><tspan fill="#f5a623"> craft-core</tspan></text>
+<text x="28" y="264" font-size="14" xml:space="preserve"></text>
+<text x="28" y="284" font-size="14" xml:space="preserve"><tspan fill="#ffffff" font-weight="700">  Plan</tspan><tspan fill="#5d6570"> · this project (just me)</tspan></text>
+<text x="28" y="304" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  + </tspan><tspan fill="#ffffff" font-weight="700">craft-core</tspan><tspan fill="#5d6570"> 5 skills · has hooks</tspan></text>
+<text x="28" y="324" font-size="14" xml:space="preserve"></text>
+<text x="28" y="344" font-size="14" xml:space="preserve"><tspan fill="#f5a623">? </tspan><tspan fill="#ffffff" font-weight="700">Apply?</tspan><tspan fill="#5d6570"> (Y/n) </tspan><tspan fill="#3fb950">yes</tspan></text>
+<text x="28" y="364" font-size="14" xml:space="preserve"></text>
+<text x="28" y="384" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  ✔ </tspan><tspan fill="#d7dae0">Installed </tspan><tspan fill="#ffffff" font-weight="700">craft-core</tspan><tspan fill="#5d6570"> 0.8s</tspan></text>
+<text x="28" y="404" font-size="14" xml:space="preserve"></text>
+<text x="28" y="424" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  ╭────────────────────────────────────────────────╮</tspan></text>
+<text x="28" y="444" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  │ </tspan><tspan fill="#3fb950">✔ </tspan><tspan fill="#ffffff" font-weight="700">1 plugin</tspan><tspan fill="#5d6570"> · </tspan><tspan fill="#ffffff" font-weight="700">5 skills</tspan><tspan fill="#5d6570"> → this project (just me)</tspan><tspan fill="#3fb950"> │</tspan></text>
+<text x="28" y="464" font-size="14" xml:space="preserve"><tspan fill="#3fb950">  ╰────────────────────────────────────────────────╯</tspan></text>
+<text x="28" y="484" font-size="14" xml:space="preserve"></text>
+<text x="28" y="504" font-size="14" xml:space="preserve"><tspan fill="#ffffff" font-weight="700">  Next</tspan><tspan fill="#5d6570">  nothing to commit: just-me files are excluded from git</tspan></text>
+<text x="28" y="524" font-size="14" xml:space="preserve"><tspan fill="#f5a623">  › </tspan><tspan fill="#d7dae0">restart Claude Code, or run </tspan><tspan fill="#f5a623">/reload-plugins</tspan></text></g>
+</svg>
