@@ -2,6 +2,12 @@
 
 What changed for people who use `skills`. Newest first. Each version is a git tag (`v1.0.0`) and a [GitHub release](https://github.com/notsubash/claude-skills/releases); `skills self-update` installs the latest one.
 
+## [1.0.1] - 2026-11-20
+
+### Fixed
+
+- `skills self-update` and the daily update check no longer fail with "GitHub answered 403" on shared networks. They used GitHub's API, which allows 60 requests an hour per IP address; they now read the release page, which has no such cap.
+
 ## [1.0.0] - 2026-11-20
 
 The first release.
@@ -32,4 +38,5 @@ The first release.
 - Own bundles: **core**, **craft-core** (senior PRs, security gate, project docs, product lens, deepen), **craft-web**, **web**, **security**, **oss**, **writing** and **ops**.
 - Pinned third-party plugins: superpowers, matt-eng, ponytail, security-guidance, security-audit, skill-creator, playwright-cli, impeccable, stageshow, charles-design and emil-design-eng.
 
+[1.0.1]: https://github.com/notsubash/claude-skills/releases/tag/v1.0.1
 [1.0.0]: https://github.com/notsubash/claude-skills/releases/tag/v1.0.0

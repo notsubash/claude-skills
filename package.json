@@ -1,6 +1,6 @@
 {
   "name": "craft-skills",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "My Claude Code skills marketplace and the `skills` CLI that installs them per project, just for me, or globally.",
   "license": "MIT",
