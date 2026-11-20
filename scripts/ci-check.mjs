@@ -73,5 +73,13 @@ for (const p of market.plugins.filter((p) => typeof p.source === 'string')) {
   }
 }
 
+// 4. The CLI catalog (picker blurbs, third-party skill lists) covers every marketplace entry.
+const catalog = await import(new URL('../cli/lib/catalog.mjs', import.meta.url));
+for (const p of market.plugins) {
+  if (!catalog.BLURB[p.name]) err(`${p.name}: add a one-line BLURB in cli/lib/catalog.mjs`);
+  if (typeof p.source !== 'string' && !(p.name in catalog.THIRD_PARTY_SKILLS)) err(`${p.name}: list its skills in THIRD_PARTY_SKILLS in cli/lib/catalog.mjs`);
+}
+for (const r of catalog.RECIPES) for (const n of r.plugins) if (!names.has(n)) err(`recipe ${r.id}: plugin ${n} is not in the marketplace`);
+
 if (errors.length) { console.error(errors.map((e) => `FAIL ${e}`).join('\n')); process.exit(1); }
 console.log(`ok  ${market.plugins.length} marketplace entries, ${reviewed.size} pinned third-party reviews, ${skillCount} own skills with eval coverage`);

@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -40,10 +40,19 @@ jobs:
         run: |
           claude plugin validate .
           for p in plugins/*/; do claude plugin validate "$p"; done
+      - name: Install the CLI the way users do (npm pack + npm i -g) and run it
+        shell: bash
+        run: |
+          npm pack --silent
+          npm install -g ./craft-skills-*.tgz
+          skills list
+          skills help
       - name: Repo rules (pins, reviews, skill frontmatter, eval coverage)
         run: node scripts/ci-check.mjs
       - name: Install core into an empty project, check the exact skill set, uninstall, check git diff is empty
         run: node scripts/install-test.mjs core
+      - name: Install craft-core just-me (--local), check git status stays empty, uninstall
+        run: node scripts/install-test.mjs craft-core --local
 
   evals:
     name: evals (${{ matrix.plugin }})
