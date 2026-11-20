@@ -20,8 +20,10 @@
 One command, same on Windows, macOS and Linux (needs [Node 22+](https://nodejs.org) and [Claude Code](https://code.claude.com)):
 
 ```bash
-npm i -g github:notsubash/claude-skills
+npm i -g github:notsubash/claude-skills#semver:x
 ```
+
+(`#semver:x` installs the latest release. Leave it off to track `main`.)
 
 Then, in any project folder:
 
@@ -31,7 +33,7 @@ skills
 
 That's it. It asks what you're doing, where the skills should live, and which ones you want, then installs them. On a fresh clone it notices the project's plugins aren't downloaded yet and offers to fetch them. Restart Claude Code (or run `/reload-plugins`) and the skills are there.
 
-> Just trying it? `npx github:notsubash/claude-skills` runs the same picker without installing anything.
+> Just trying it? `npx github:notsubash/claude-skills#semver:x` runs the same picker without installing anything.
 
 Once you know what you want, skip the questions:
 
@@ -101,13 +103,15 @@ Needs **Node 22+**, **git**, and **Claude Code ≥ 2.1.300** (`npm i -g @anthrop
 
 | I want to… | Run | Update it later |
 |---|---|---|
-| **Use the skills** (most of the time) | `npm i -g github:notsubash/claude-skills` | `skills self-update` |
+| **Use the skills** (most of the time) | `npm i -g github:notsubash/claude-skills#semver:x` | `skills self-update` (installs the latest release) |
 | **Edit skills** in this repo too | `git clone https://github.com/notsubash/claude-skills && cd claude-skills && npm link` | `skills self-update` (does a `git pull`) |
-| Try once, install nothing | `npx github:notsubash/claude-skills` | n/a |
+| Try once, install nothing | `npx github:notsubash/claude-skills#semver:x` | n/a |
 
 Then `skills doctor` checks everything. The CLI is small; the skills themselves install from GitHub through Claude Code, pinned by the lockfile. `npm link` makes `skills` run straight from your clone, so `skills new-skill` and `--source local` work on your edits. No PATH editing on any OS.
 
-**Tab completion** (optional): `skills completion install` sets it up for the shell you're in: bash, zsh, fish or PowerShell. After that, `skills add cr<Tab>` completes plugin and skill names, `skills use <Tab>` lists scenarios, and `--<Tab>` shows the flags that command takes, with descriptions where the shell can show them. Names are read from the marketplace each time you press Tab, so new plugins show up without reinstalling.
+**Tab completion** sets itself up the first time you run `skills` in bash, zsh, fish or PowerShell, once per shell, and tells you when it does. From the next terminal, `skills add cr<Tab>` completes plugin and skill names, `skills use <Tab>` lists scenarios, and `--<Tab>` shows the flags that command takes, with descriptions where the shell can show them. Names are read from the marketplace each time you press Tab, so new plugins show up without reinstalling, and `skills self-update` refreshes the hook itself. `skills completion install [shell]` sets it up by hand (say, for a second shell); `skills completion uninstall` turns it off and it stays off.
+
+**Versions and updates.** `skills --version` prints the version you're on. Each release is a tag (`v1.0.0`) with notes in [CHANGELOG.md](CHANGELOG.md). Once a day `skills` checks GitHub in the background, and when a newer release is out it prints one line after the command: `update available: 1.0.0 → 1.1.0 · skills self-update`. Nothing is printed in CI or when output is piped. Turn the check off with `SKILLS_NO_UPDATE_CHECK=1`.
 
 <details>
 <summary><b>Without the CLI</b> (another machine, or just checking the marketplace works)</summary>
@@ -222,8 +226,9 @@ Skills trigger on their own when what you type matches their description. These 
 | `skills doctor` | Tools, manifest, and per scope: marketplace, lockfile vs settings, downloads, safeguards |
 | `skills new-skill <name> --bundle <plugin>` | New SKILL.md + 7 eval cases from `templates/` |
 | `skills vet <owner/repo> --sha <sha>` | Scan a third-party skill before pinning it |
-| `skills self-update` | Update the CLI itself: `git pull` for a clone, reinstall from GitHub for an npm install |
-| `skills completion install [shell]` | Tab completion for bash, zsh, fish or PowerShell (detected if you leave it out). `skills completion uninstall` removes it; `skills completion <shell>` prints the script |
+| `skills self-update` | Update the CLI itself to the latest release (`1.0.0 → 1.1.0`) and refresh tab completion. A git clone does a `git pull` instead |
+| `skills --version` | The version you're on |
+| `skills completion install [shell]` | Tab completion for bash, zsh, fish or PowerShell (detected if you leave it out; it also sets itself up on first run). `skills completion uninstall` removes it; `skills completion <shell>` prints the script |
 
 | Flag | Effect |
 |---|---|
@@ -272,7 +277,8 @@ Two things stay manual: decline ponytail's offer to add a statusLine, and declin
 | `skills: command not found` | Open a new terminal after `npm i -g`. Still missing? `npm prefix -g` must be on PATH (nvm/fnm set this up) |
 | "Claude Code is not installed" | `npm i -g @anthropic-ai/claude-code`, then `skills` again |
 | Tab does nothing in PowerShell | Windows ships with scripts disabled, so profiles don't load. `skills completion install` offers the fix (`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`); `skills doctor` reports it |
-| Tab does nothing after install | Open a new terminal. bash also needs `~/.bashrc` to be loaded: macOS login shells read `~/.bash_profile` |
+| Tab does nothing after install | Open a new terminal, or `source ~/.bashrc` (bash), `exec zsh`, `exec fish`, `. $PROFILE` (PowerShell) |
+| Tab does nothing in bash on Windows | Typing `bash` in PowerShell or cmd often opens **WSL**, not Git Bash, and WSL has its own home folder. Run `skills` once inside that shell and it sets up completion there too |
 | Arrow keys don't work in Git Bash | mintty has no real TTY; answer the numbered prompts, or use Windows Terminal / `winpty skills` |
 | Lockfile doesn't match settings | Someone edited settings by hand. `skills remove <x>` then `skills add <x>` in that scope |
 | Want to see what a plugin does before installing | `skills info <name>`, or the details pane in `skills` |
@@ -350,6 +356,11 @@ Third-party skills aren't copied here. A marketplace entry points at the upstrea
 2. `scripts/ci-check.mjs`: full-SHA pins, a review per pin, skill frontmatter rules, eval coverage
 3. `scripts/install-test.mjs core`: installs core into an empty git repo with an isolated config, starts a real `claude -p` session, compares its skills to `tests/expected/core.json` exactly, uninstalls, requires `git status` to be empty. No API key needed
 4. `scripts/install-test.mjs craft-core --local`: same for a just-me install, and `git status` must be empty right after the install too
+5. `scripts/completion-test.mjs`: presses Tab in real bash, zsh, fish and PowerShell; `scripts/version-test.mjs`: update check, and a changelog entry for the package.json version
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which checks the tag matches `package.json` and publishes the GitHub release with that version's CHANGELOG section.
+
+**Cutting a release:** in a PR, bump `version` in `package.json` and add a `## [x.y.z] - date` section to `CHANGELOG.md`. After it merges, `node scripts/release.mjs` on main tags it and pushes the tag.
 
 Evals are a manual job (`workflow_dispatch` with `evals: true`). Latest results: [evals/REPORT.md](evals/REPORT.md).
 
@@ -366,9 +377,9 @@ plugins/<name>/                   own plugins (craft-core, craft-web, ops, oss, 
   evals/<skill>-{trigger,no-trigger,task}-N/
   hooks/                          craft-core only: deepen.mjs, push-guard.mjs
 cli/skills.mjs                    the CLI (bin/skills, skills.cmd, skills.ps1 are shims)
-cli/lib/                          catalog.mjs (blurbs, scenarios), picker.mjs (prompts), ui.mjs (look), scan.mjs (vet)
+cli/lib/                          catalog.mjs (blurbs, scenarios), picker.mjs (prompts), ui.mjs (look), scan.mjs (vet), completion.mjs (Tab), update.mjs (update check)
 third_party/                      manifest.json + REVIEW.md: one review per pin
-scripts/                          ci-check, install-test, eval-report, readme-assets
+scripts/                          ci-check, install-test, completion-test, version-test, release, eval-report, readme-assets
 templates/                        new-skill templates
 tests/expected/                   exact skill sets an install must produce
 assets/                           README banner and demo (generated)
