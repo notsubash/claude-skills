@@ -1,5 +1,5 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "craft",
   "description": "Personal Claude Code skills: my own bundles plus third-party skills pinned to reviewed commits.",
   "owner": {
@@ -16,7 +16,7 @@
     {
       "name": "craft-core",
       "source": "./plugins/craft-core",
-      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, product-lens, deepen (+ first-prompt hook, push guard).",
+      "description": "My own core skills and hooks, no dependencies: senior-pr, security-gate, project-docs, product-lens, deepen (+ first-prompt hook, push guard, terse output style).",
       "category": "own"
     },
     {

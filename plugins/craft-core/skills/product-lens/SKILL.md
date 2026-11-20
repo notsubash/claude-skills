@@ -1,76 +1,69 @@
 ---
 name: product-lens
-description: Apply product judgment before building - who exactly has the problem, the job they're hiring the product for, the evidence versus the assumptions, the riskiest assumption and the cheapest test of it, one success metric with a baseline and target, and the smallest scope worth shipping - ending in a build, test-first or don't-build call. Use when the user asks whether a feature is worth building, what to build next, how to prioritize features or a backlog, what the success metric should be, who a product is for, or to review a PRD, spec or feature idea. Not for writing the PRODUCT.md file itself (use project-docs) or for implementing the feature.
+description: Think like a product-minded engineer - whether a change is worth building, for whom, and how we'll know. Separates evidence from assumptions, names the specific user and pain, sets an outcome metric with guardrails, compares options including do nothing and a smaller version, sets the appetite (time budget), finds the thin slice, rabbit holes and no-gos, designs the experiment with kill criteria, and ends in a build, test-first or don't-build call. Use when the user asks whether a feature is worth building, what to build next, how to prioritize a backlog, what the success metric should be, who a product is for, to review or write a PRD, spec, ticket or experiment, to prepare customer interviews, to frame tech debt or build-vs-buy as a product tradeoff, or to learn product thinking. Not for writing the PRODUCT.md file itself (use project-docs) or for implementing the feature.
 ---
 
 # Product lens
 
-Most wasted engineering is good code for the wrong thing. Before the "how", settle who has the problem, how badly, how you'll know it worked, and the smallest thing that would tell you.
+Most wasted engineering is good code for the wrong thing. Ask whether a change is worth building, for whom, and how we'll know, before the "how".
 
-Work from the request in front of you. Ask only for what you can't find. Read the repo's `PRODUCT.md`, `README`, issues and analytics docs first.
+Match the depth to the request: a quick question gets a short answer; a real spec gets the full template. Read the repo's `PRODUCT.md`, `README`, issues and analytics docs first. Ask only for what's missing, in one batch.
 
-## 1. Evidence before opinions
+## Principles
 
-List what's known, and label each item:
-- **Evidence:** user quotes, support tickets, issue threads, analytics numbers, usage logs, churn reasons, sales calls, the user's own repeated behavior.
-- **Assumption:** everything else, including "users want X" with no source.
+1. **Problem before solution.** A feature request is a hypothesis about a problem. State the pain in the user's terms first.
+2. **Outcomes over outputs.** Judge work by the change in user or business behavior, not by features shipped.
+3. **Match process to reversibility.** One-way doors (public API contracts, core data models, pricing) get slow, senior, written review. Two-way doors (copy, layout behind a flag) get decided fast by whoever is closest. Call out two-way doors treated as one-way.
+4. **Appetite before estimate.** Ask what the problem is worth in time, then shrink the solution to fit. Fixed time, variable scope.
+5. **Shape before building.** Narrow the problem, set boundaries, name rabbit holes and no-gos before design or code.
+6. **Write the customer story first.** If you can't write a compelling announcement and FAQ in the customer's words, you aren't ready to build.
+7. **Past behavior beats opinions about the future.** Ask what users did last time and what it cost them, not whether they'd use it.
+8. **Instrument before launch.** Success metric, guardrails and events exist before the flag turns on.
+9. **Own the result.** After release, compare outcome to prediction and adjust the next bet.
 
-Go to the rawest source available: the ticket text rather than a summary of it, the event table rather than a dashboard. If the evidence is thin, say so plainly. That's itself a finding.
+## Workflow: a feature, ticket or "should we build X"
 
-## 2. The user and the job
+Run in order. Skip steps the user already answered.
 
-- **Who:** a specific segment, not "users". Say how many there are, how often the problem hits them, and how painful it is. Separate the person who uses it from the person who pays, if they differ.
-- **The job:** "When <situation>, I want to <motivation>, so I can <outcome>."
-- **Today's alternative:** what they do now (a workaround, a competitor, nothing) and what switching would cost them. If the current workaround is cheap and fine, the feature has to be much better, not just available.
+1. **Evidence vs assumptions.** Label each known fact. *Evidence:* user quotes, tickets, analytics, usage logs, churn reasons, sales calls, spending. *Assumption:* everything else, including "users want X" with no source. Go to the rawest source available. Thin evidence is itself a finding.
+2. **Clarify the situation.** Who has this problem (a segment with a count, not "users")? How often and how painful? How do they solve it today, and what does switching cost? What happens if we do nothing? Separate user from buyer if they differ.
+3. **Problem statement**, one sentence: *[specific user] struggles to [task] because [cause], which costs them [consequence].* If you can't write it, say so and stop designing.
+4. **Outcome and metrics.** One primary metric that reflects real behavior change, with baseline (or "unknown: measure first"), target and timeframe. One leading indicator. One or two guardrails (latency, errors, support volume, revenue, churn). Name the events or queries; adding missing ones is part of the work. Vanity metrics don't count.
+5. **Options, at least three**, always including *do nothing* and *a smaller version*. For each: cost, time, reversibility, what it teaches us. A small table works.
+6. **Appetite.** What is this worth to the business in time? Pick the option that fits.
+7. **Thin slice.** The smallest end-to-end version that tests the riskiest assumption and is still useful. Prefer vertical slices over horizontal layers.
+8. **Rabbit holes and no-gos.** What could eat the budget (edge cases, integrations, migrations, performance), and what is explicitly out, with the trigger that would bring each back.
+9. **Riskiest assumption and experiment.** The one assumption that makes the work pointless if wrong (demand, value or feasibility). The cheapest test that could disprove it: 5 targeted conversations, fake door or waitlist, concierge/manual version, prototype, or an existing data query. Rollout (flag, 1%, 10%, 50%, 100%), decision date, and a **kill criterion written in advance**.
+10. **Decide.** One call, the reasons, untested assumptions, next step:
+    - **Build:** strong evidence, clear metric, small scope.
+    - **Test first:** promising, riskiest assumption untested. Name the test and kill criterion.
+    - **Don't build (now):** weak evidence, a cheap existing alternative, or cost far above value. Say what would change your mind.
 
-## 3. Riskiest assumption, cheapest test
+## Reviewing a spec, PRD or ticket
 
-Name the one assumption that, if wrong, makes the work pointless. Usually it's demand ("they'll use it"), value ("it solves the job") or feasibility.
+Check each; report gaps as a short list, most important first, quoting the line you're responding to:
 
-Propose the cheapest test that could prove it wrong, before building the full thing:
-- 5 user conversations with a specific question
-- a fake-door button or waitlist
-- a concierge or manual version
-- a clickable prototype
-- an existing data query
+- User specific? Pain evidenced, not asserted?
+- Measurable outcome with baseline and target, not only an output?
+- Non-goals written down?
+- Do-nothing or smaller alternative considered?
+- Time budget stated, and scope fits it?
+- Reversible? If not, reviewed at the right level?
+- Metrics and guardrails instrumented before launch?
+- Failure, empty and error states covered?
+- Rollout and rollback plan?
+- Riskiest assumptions named, each with a cheap test?
 
-Give the test a **kill criterion** decided in advance: "If fewer than 3 of 10 trial users enable it within a week, we stop."
+## Anti-patterns to call out
 
-## 4. One metric that would prove it
+Building a handed-down spec without asking why. Counting output (tickets, PRs) as progress. Gold-plating an unvalidated feature. Overfitting to the loudest customer. Skipping do-nothing. Launching without metrics or a kill criterion. Extending the deadline instead of cutting scope. Treating product as someone else's job.
 
-- **Primary metric:** what changes for the user if this works, measured by behavior, not opinion. Give the baseline (today's number, or "unknown: measure it first"), the target, and the timeframe.
-- **Guardrails:** 1–2 metrics that must not get worse (for example support load, latency, churn or cost).
-- **Instrumentation:** the exact events or queries that measure it. If they don't exist, adding them is part of the work.
+## Load only when needed
 
-Vanity metrics (page views, sign-ups without activation, "engagement") don't count unless they're tied to the job.
-
-## 5. Scope to the smallest valuable version
-
-- Cut to the slice that delivers the job for the core segment and tests the riskiest assumption.
-- List what's deliberately out, and the trigger that would bring each item back.
-- When comparing options, put value against cost explicitly. A small table works: option, who it helps, evidence, rough effort, risk.
-
-## 6. Decide
-
-End with one call and the reason:
-- **Build:** strong evidence, clear metric, small scope.
-- **Test first:** promising but the riskiest assumption is untested. Name the test and the kill criterion.
-- **Don't build (now):** weak evidence, a cheap existing alternative, or cost far above value. Say what would change your mind.
-
-## Reviewing a PRD, spec or feature idea
-
-Check it against the steps above and report gaps as a short list, most important first:
-- Is the problem stated with evidence?
-- Is the user specific?
-- Does a measurable metric have a baseline and target?
-- Are non-goals listed?
-- Is the riskiest assumption named?
-- Are failure, empty and error states covered?
-- Is there a launch and rollback plan?
-- Is the instrumentation specified?
-
-Quote the line you're responding to.
+- Writing a problem statement, press release/FAQ, spec or experiment card: [references/templates.md](references/templates.md)
+- Preparing customer interviews or setting up ongoing discovery: [references/discovery.md](references/discovery.md)
+- Tech debt, performance, estimates, build vs buy, reliability, prioritization (RICE, cost of delay), communicating a decision, or teaching the method: [references/tradeoffs.md](references/tradeoffs.md)
 
 ## Output
 
-Keep it tight. Use these headings: **Evidence vs assumptions**, **User and job**, **Riskiest assumption and test**, **Metric**, **Scope**, **Decision**. When the user wants it recorded, offer to add the result to `PRODUCT.md` or the decision log through `project-docs`. Say what outside signal (a number, a user, a test result) would show the decision was right.
+For "should we build X": headings **Evidence vs assumptions**, **User and problem**, **Metric**, **Options**, **Riskiest assumption and test**, **Scope**, **Decision**. Keep each to a few lines. Say what outside signal (a number, a user, a test result) would show the decision was right. When the user wants it recorded, offer to add it to `PRODUCT.md` or the decision log through `project-docs`.

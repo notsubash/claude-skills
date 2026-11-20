@@ -13,6 +13,7 @@ Claude Code 2.1.328, run 2026-11-19, 2/3 runs per case and arm, list-price cost 
 | human-voice | 100% (6/6) | 100% (6/6) | 1.00 | 1.00 | +0.00 |
 | oss-contribute | 100% (6/6) | 100% (6/6) | 1.00 | 1.00 | +0.00 |
 | oss-portfolio | 100% (6/6) | 100% (6/6) | 1.00 | 0.67 | +0.33 |
+| product-lens | 100% (12/12) | 100% (9/9) | 1.00 | 0.33 | +0.67 |
 | project-docs | 100% (6/6) | 100% (6/6) | 1.00 | 0.33 | +0.67 |
 | security-gate | 100% (6/6) | 100% (6/6) | 0.67 | 0.00 | +0.67 |
 | senior-pr | 100% (6/6) | 100% (6/6) | 1.00 | 0.50 | +0.50 |
@@ -33,4 +34,5 @@ Claude Code 2.1.328, run 2026-11-19, 2/3 runs per case and arm, list-price cost 
   - oss-contribute's criteria were worded as actions ("writes a test"), so plans failed. Reworded to "the plan includes".
   - human-voice scored 0.50 with the skill vs 1.00 without, because it gave 2–3 drafts when asked for one reply. **The skill was changed** to give one draft when one is asked for, and it now scores 1.00.
 - **Δ = 0** for figure-check, human-voice and oss-contribute: the base model already passes these tasks, so they don't yet show what the skills add. Harder task cases are the next step for these three.
+- **product-lens was added later**, run separately on 2026-11-20 after the rewrite into a product-minded-engineer workflow (3 runs per case and arm, list-price $2.41, Claude Code 2.1.328). Its row was merged into the table above by hand. Four trigger cases, including customer-interview prep. Without the skill, all 3 task runs gave a decision but failed the judge on separating evidence from assumptions, a cheap test before the 4-day build, and a metric with a baseline.
 - **Isolation.** Trigger cases load only the plugin under test. In a real session with superpowers, Matt Pocock's skills and the built-ins loaded together, collisions (for example senior-pr vs superpowers:finishing-a-development-branch) aren't measured here.
