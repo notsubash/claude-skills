@@ -1,0 +1,29 @@
+name: release
+
+# Pushing a v1.2.3 tag (scripts/release.mjs does this) publishes the GitHub release.
+# `skills self-update` and the daily update notice read the latest release, so this is what ships.
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag matches package.json
+        run: |
+          v=$(node -p "require('./package.json').version")
+          test "v$v" = "$GITHUB_REF_NAME" || { echo "::error::tag $GITHUB_REF_NAME but package.json says $v"; exit 1; }
+      - name: Notes from CHANGELOG.md
+        run: |
+          v=${GITHUB_REF_NAME#v}
+          awk -v h="## [$v]" 'index($0, h) == 1 { on = 1; next } /^## \[/ { on = 0 } on && !/^\[[^]]*\]: /' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "::error::CHANGELOG.md has no ## [$v] section"; exit 1; }
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag

@@ -14,11 +14,16 @@ import * as ui from './lib/ui.mjs';
 import { c, sym } from './lib/ui.mjs';
 import { select, multiselect, confirm, isCancel } from './lib/picker.mjs';
 import * as completion from './lib/completion.mjs';
+import * as update from './lib/update.mjs';
 import { loadMarketplace, BLURB, HOOKS, SECTIONS, RECIPES, SCOPES, ownSkills, dependencies, skillsOf, pluginForSkill, includedIn, THIRD_PARTY_SKILLS } from './lib/catalog.mjs';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MARKET = 'craft';
 const DEFAULT_SOURCE = 'notsubash/claude-skills';
+const CLI = fileURLToPath(import.meta.url);
+const VERSION = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')).version;
+const UPDATE_CACHE = update.cacheFile(completion.dataDir());
+const STATE = join(completion.dataDir(), 'state.json');
 const MIN_CLAUDE = [2, 1, 300];
 const CONFIG_DIR = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
 const WIN = process.platform === 'win32';
@@ -536,6 +541,7 @@ function cmdDoctor() {
   const check = (cond, msg, fix) => { if (cond) ui.ok(msg); else { ui.fail(msg); if (fix) ui.log(`      ${c.gray('fix:')} ${c.accent(fix)}`); bad++; } };
   ui.banner('doctor');
   ui.log(`  ${c.bold('Tools')}`);
+  ui.ok(`skills ${VERSION} ${c.gray(existsSync(join(REPO, '.git')) ? `(git clone ${REPO})` : '')}`);
   const v = runSync('claude', ['--version'], { allowFail: true }).stdout.match(/(\d+)\.(\d+)\.(\d+)/);
   const ver = v ? v.slice(1).map(Number) : null;
   check(ver && (ver[0] - MIN_CLAUDE[0] || ver[1] - MIN_CLAUDE[1] || ver[2] - MIN_CLAUDE[2]) >= 0, `Claude Code ${ver ? ver.join('.') : 'not found'} ${c.gray(`(need ≥ ${MIN_CLAUDE.join('.')})`)}`, 'npm i -g @anthropic-ai/claude-code@latest');
@@ -750,21 +756,69 @@ function vet() {
   console.log(`\nChecked out at ${root}. Read the files there, then finish ${out}.`);
 }
 
-// The CLI itself: a git clone pulls, an npm install reinstalls from GitHub.
+// The CLI itself: a git clone pulls main; an npm install reinstalls the latest release tag.
 async function selfUpdate() {
   ui.banner('self-update');
+  let to = VERSION;
   if (existsSync(join(REPO, '.git'))) {
     const s = ui.spinner(`git pull ${c.gray(REPO)}`);
     const r = runSync('git', ['-C', REPO, 'pull', '--ff-only'], { allowFail: true });
     if (r.status) { s.fail(); die((r.stderr || r.stdout).trim()); }
-    s.succeed(r.stdout.includes('Already up to date') ? 'already up to date' : `updated to ${runSync('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD']).stdout.trim()}`);
+    to = readJson(join(REPO, 'package.json'), {}).version || VERSION;
+    s.succeed(r.stdout.includes('Already up to date') ? `already up to date ${c.gray(`(${VERSION}, main)`)}` : `updated to ${runSync('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD']).stdout.trim()}`);
   } else {
-    const s = ui.spinner(`npm i -g github:${DEFAULT_SOURCE}`);
-    const r = await runAsync('npm', ['i', '-g', `github:${DEFAULT_SOURCE}`]);
-    if (r.status) { s.fail(); die((r.stderr || r.stdout).trim()); }
-    s.succeed('reinstalled from GitHub');
+    const s = ui.spinner('checking the latest release');
+    let latest;
+    try { latest = await update.latest(DEFAULT_SOURCE, 15000); } catch (e) { s.fail(); die(`couldn't reach GitHub: ${e.message}`); }
+    if (!latest) { s.fail(); die(`no release published yet at github.com/${DEFAULT_SOURCE}/releases`); }
+    update.writeCache(UPDATE_CACHE, { checked: Date.now(), latest });
+    if (!update.newer(latest, VERSION) && !flag('force')) { s.succeed(`already on the latest release ${c.gray(`(${VERSION})`)}`); return; }
+    s.succeed(`latest release ${c.bold(latest)}`);
+    const spec = `github:${DEFAULT_SOURCE}#v${latest}`;
+    const i = ui.spinner(`npm i -g ${spec}`);
+    const r = await runAsync('npm', ['i', '-g', spec]);
+    if (r.status) { i.fail(); die((r.stderr || r.stdout).trim()); }
+    i.succeed('installed');
+    to = latest;
   }
+  if (to !== VERSION) ui.ok(`${c.gray(VERSION)} → ${c.bold(to)}`);
+  // The old code is what's running, so ask the new code to rewrite any tab-completion hooks it changed.
+  const r = spawnSync(process.execPath, [CLI, '__refresh-completion'], { encoding: 'utf8' });
+  for (const sh of (r.stdout || '').split(/\s+/).filter(Boolean)) ui.ok(`tab completion for ${sh} refreshed`);
   ui.hint('Plugins update separately: skills update');
+}
+
+function cmdVersion() { console.log(VERSION); }
+
+// ---------- after every command ----------
+const readState = () => readJson(STATE, {});
+// Tab completion sets itself up the first time the CLI runs in an interactive bash, zsh, fish or
+// PowerShell, once per shell. `skills completion uninstall` is remembered, so it never comes back.
+function autoCompletion() {
+  const shell = completion.detectShell();
+  const state = readState();
+  if (!completion.SHELLS.includes(shell) || state.completion?.[shell]) return;
+  const save = (v) => { try { writeJson(STATE, { ...state, completion: { ...state.completion, [shell]: v } }); } catch { /* read-only home */ } };
+  if (completion.isInstalled(shell, psProfiles)) return save('installed');
+  // A PowerShell that blocks scripts can't load a profile; `skills completion install` walks through that.
+  if (shell === 'powershell' && psInfo().some((p) => psBlocked(p.policy))) return save('blocked');
+  const { rcs } = completion.install(shell, psProfiles);
+  if (!rcs.length) return;
+  save('installed');
+  ui.log(`\n  ${sym.info} tab completion is on for ${shell} ${c.gray(`from your next terminal · now: ${reloadHint(shell, rcs)} · undo: skills completion uninstall`)}`);
+}
+const reloadHint = (shell, rcs) => (shell === 'fish' ? 'exec fish' : shell === 'powershell' ? '. $PROFILE' : `source ${rcs[0].replace(completion.home(), '~').replace(/\\/g, '/')}`);
+
+function updateNotice() {
+  const latest = update.check({ current: VERSION, file: UPDATE_CACHE, respawn: [process.execPath, CLI, '__update-check'] });
+  if (latest) console.error(`\n  ${sym.warn} update available: ${c.gray(VERSION)} → ${c.green(latest)} ${c.gray('·')} ${c.accent('skills self-update')}\n`);
+}
+
+function afterCommand() {
+  if (cmd?.startsWith('__') || ['self-update', 'completion', 'version', '--version', '-v'].includes(cmd)) return;
+  if (update.quiet()) return; // CI, pipes and scripts get nothing extra
+  try { autoCompletion(); } catch { /* never let this fail a command */ }
+  try { updateNotice(); } catch { /* same */ }
 }
 
 // ---------- tab completion ----------
@@ -784,12 +838,14 @@ function completeWords() {
 
 // PowerShell keeps its profile under Documents, which OneDrive may have moved, so ask it.
 // Windows PowerShell 5.1 and PowerShell 7 each have their own profile; hook up whichever exist.
-function psInfo() {
-  return (WIN ? ['powershell', 'pwsh'] : ['pwsh']).map((exe) => {
+let PS_INFO;
+function psInfo(fresh = false) {
+  if (PS_INFO && !fresh) return PS_INFO;
+  return (PS_INFO = (WIN ? ['powershell', 'pwsh'] : ['pwsh']).map((exe) => {
     const r = runSync(exe, ['-NoProfile', '-NonInteractive', '-Command', '$PROFILE.CurrentUserCurrentHost; Get-ExecutionPolicy'], { allowFail: true });
     const [profile, policy] = r.status === 0 ? r.stdout.trim().split(/\r?\n/).map((s) => s.trim()) : [];
     return { exe, profile, policy };
-  }).filter((p) => p.profile);
+  }).filter((p) => p.profile));
 }
 const psProfiles = () => psInfo().map((p) => p.profile);
 // Windows ships with scripts disabled, which stops profiles (and npm's skills.ps1) from loading.
@@ -809,7 +865,7 @@ async function allowPsScripts() {
     if (isCancel(yes) || !yes) die(`left your execution policy alone. Run this when you're ready, then try again:\n${fix}`);
   }
   for (const { exe } of blocked) runSync(exe, ['-NoProfile', '-NonInteractive', '-Command', `${fix} -Force`], { allowFail: true });
-  const still = psInfo().filter((p) => psBlocked(p.policy));
+  const still = psInfo(true).filter((p) => psBlocked(p.policy));
   if (still.length) die(`${still.map((p) => p.exe).join(' and ')} still blocks scripts (${still[0].policy}). A group policy may be setting it; ask your admin.`);
   ui.ok(`execution policy ${c.gray('RemoteSigned (current user)')}`);
 }
@@ -825,11 +881,13 @@ async function cmdCompletion() {
     if (shell === 'powershell' && !rcs.length) die('could not find a PowerShell profile path (is powershell or pwsh on PATH?)');
     ui.ok(`tab completion for ${c.bold(shell)} ${c.gray(file)}`);
     for (const rc of rcs) ui.log(`  ${changed.includes(rc) ? sym.ok : c.gray('·')} ${changed.includes(rc) ? 'loaded from' : c.gray('already in')} ${c.gray(rc)}`);
-    ui.blank(); ui.hint(`open a new terminal, then try: skills add <Tab>`);
+    try { writeJson(STATE, { ...readState(), completion: { ...readState().completion, [shell]: 'installed' } }); } catch { /* fine */ }
+    ui.blank(); ui.hint(`open a new terminal (or run ${reloadHint(shell, rcs)}), then try: skills add <Tab>`);
     return;
   }
   if (what === 'uninstall') {
     const changed = completion.uninstall(shell, psProfiles);
+    try { writeJson(STATE, { ...readState(), completion: { ...readState().completion, [shell]: 'removed' } }); } catch { /* fine */ }
     if (changed.length) for (const f of changed) ui.ok(`removed from ${c.gray(f)}`); else ui.info(`tab completion for ${shell} was not installed`);
     return;
   }
@@ -864,13 +922,14 @@ function help() {
   ui.log(`  ${c.bold('Author')}`);
   row('skills new-skill <name> --bundle <p>', 'skill + 7 eval cases from templates');
   row('skills vet <owner/repo> --sha <sha>', 'scan a third-party skill before pinning');
-  row('skills self-update', 'update this CLI (git clone or npm install)');
+  row('skills self-update', 'update this CLI to the latest release');
   row('skills completion install', 'Tab-complete commands, plugins, skills, flags');
   ui.blank();
   ui.log(`  ${c.bold('Scope')}  ${c.gray('(default: this project, shared)')}`);
   row('--local', 'this project, just me (git-ignored)');
   row('--global', 'every project on this machine');
   ui.blank();
+  ui.log(`  ${c.bold('Version')}  ${c.gray(`${VERSION} · skills --version`)}`);
   ui.log(`  ${c.bold('Other')}  ${c.gray('--dir PATH · --source github|local|PATH · --no-safeguards · --yes · --accept-impeccable')}`);
   ui.blank();
 }
@@ -880,7 +939,9 @@ const commands = {
   list: cmdList, ls: cmdList, add: cmdAdd, install: cmdAdd, remove: cmdRemove, rm: cmdRemove, uninstall: cmdRemove,
   use: cmdUse, info: cmdInfo, show: cmdInfo, sync: cmdSync, update: cmdUpdate, doctor: cmdDoctor,
   'new-skill': newSkill, vet, help, '--help': help, '-h': help, pick: interactive, 'self-update': selfUpdate,
-  completion: cmdCompletion, __complete: completeWords,
+  completion: cmdCompletion, __complete: completeWords, version: cmdVersion, '--version': cmdVersion, '-v': cmdVersion,
+  '__update-check': () => update.refreshCache(DEFAULT_SOURCE, UPDATE_CACHE),
+  '__refresh-completion': () => { const r = completion.refresh(); if (r.length) console.log(r.join(' ')); },
 };
 try {
   if (!cmd) { if (process.stdin.isTTY || flag('interactive')) await interactive(); else help(); }
@@ -891,3 +952,4 @@ try {
   console.error(`\n  ${sym.fail} ${e.message.split('\n').join('\n    ')}\n`);
   process.exitCode = 1;
 }
+afterCommand();

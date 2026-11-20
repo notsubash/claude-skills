@@ -26,7 +26,8 @@ const COMMANDS = {
   'new-skill': ['skill + 7 eval cases from templates', { '--bundle': 'plugin to add it to', '--description': 'when Claude should use it' }, null, 1],
   vet: ['scan a third-party skill before pinning', { '--sha': 'full 40-char commit', '--path': 'sub/dir in the repo', '--name': 'plugin name' }, null, 1],
   completion: ['tab completion for your shell', {}, 'completion', 2],
-  'self-update': ['update this CLI', {}, null, 0],
+  'self-update': ['update this CLI to the latest release', {}, null, 0],
+  version: ['print the CLI version', {}, null, 0],
   help: ['show commands', {}, null, 0],
 };
 const ALIASES = { ls: 'list', install: 'add', rm: 'remove', uninstall: 'remove', show: 'info', pick: null };
@@ -42,7 +43,7 @@ export function complete(words, data) {
     return pairs.filter(([v]) => v.startsWith(cur) && !seen.has(v) && seen.add(v)).map(([v, d]) => (d ? `${v}\t${d}` : v));
   };
 
-  if (!prev.length) return match(cur.startsWith('-') ? [['--help', 'show commands']] : Object.entries(COMMANDS).map(([n, [d]]) => [n, d]));
+  if (!prev.length) return match(cur.startsWith('-') ? [['--help', 'show commands'], ['--version', 'print the CLI version']] : Object.entries(COMMANDS).map(([n, [d]]) => [n, d]));
 
   const name = prev[0] in ALIASES ? ALIASES[prev[0]] : prev[0];
   const spec = COMMANDS[name];
@@ -156,16 +157,26 @@ export function detectShell(env = process.env, platform = process.platform) {
   return sh || 'bash';
 }
 
-const xdg = () => process.env.XDG_CONFIG_HOME || join(homedir(), '.config');
-const dataDir = () => join(xdg(), 'craft-skills');
+// Git Bash, MSYS and Cygwin read startup files from $HOME, which can differ from %USERPROFILE%
+// (what Node's homedir() returns on Windows). Follow the shell, not Node.
+export const home = () => (process.platform === 'win32' && process.env.HOME) || homedir();
+const xdg = () => process.env.XDG_CONFIG_HOME || join(home(), '.config');
+export const dataDir = () => join(xdg(), 'craft-skills');
 
 // Where each shell gets hooked in: the script file, plus the startup files that source it.
 // fish autoloads its completions folder, so it needs no startup file at all.
 export function targets(shell, profiles = () => []) {
   if (shell === 'fish') return { file: join(xdg(), 'fish', 'completions', 'skills.fish'), rcs: [] };
   const file = join(dataDir(), `completion.${shell === 'powershell' ? 'ps1' : shell}`);
-  if (shell === 'bash') return { file, rcs: [join(homedir(), '.bashrc')] };
-  if (shell === 'zsh') return { file, rcs: [join(process.env.ZDOTDIR || homedir(), '.zshrc')] };
+  if (shell === 'bash') {
+    // Login shells (macOS Terminal, VS Code on macOS, ssh) read the first of these and never ~/.bashrc,
+    // unless that file loads it. So hook that one too, unless it already loads ~/.bashrc.
+    const login = ['.bash_profile', '.bash_login', '.profile'].map((f) => join(home(), f)).find(existsSync);
+    const rcs = [join(home(), '.bashrc')];
+    if (login && (read(login).includes(MARK) || !/\.bashrc\b/.test(read(login)))) rcs.push(login);
+    return { file, rcs };
+  }
+  if (shell === 'zsh') return { file, rcs: [join(process.env.ZDOTDIR || home(), '.zshrc')] };
   return { file, rcs: profiles() };
 }
 
@@ -194,6 +205,17 @@ export function install(shell, profiles) {
     changed.push(rc);
   }
   return { file, rcs, changed };
+}
+
+// Rewrites the hook script for every shell that already has one, so a CLI update that changes a
+// script reaches the shell without rerunning install. Returns the shells it rewrote.
+export function refresh() {
+  return SHELLS.filter((shell) => {
+    const { file } = targets(shell);
+    if (!existsSync(file) || read(file) === script(shell)) return false;
+    writeFileSync(file, script(shell));
+    return true;
+  });
 }
 
 export function uninstall(shell, profiles) {
