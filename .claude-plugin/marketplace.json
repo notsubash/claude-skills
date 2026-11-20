@@ -10,7 +10,7 @@
     {
       "name": "core",
       "source": "./plugins/core",
-      "description": "Bundle for every project: craft-core (senior PRs, project docs, product lens, security gate, deepen hook) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
+      "description": "Bundle for every project: craft-core (senior PRs, project docs, product lens, security gate, deepen hook), ops (bug triage, observability, dependency updates, releases, maintenance) plus superpowers, Matt Pocock's planning/DDD skills and ponytail.",
       "category": "bundle"
     },
     {
@@ -47,6 +47,12 @@
       "name": "writing",
       "source": "./plugins/writing",
       "description": "Writing in your own voice, and a figure check that recomputes every number you publish.",
+      "category": "own"
+    },
+    {
+      "name": "ops",
+      "source": "./plugins/ops",
+      "description": "Running an app after launch: bug triage, observability, dependency updates with a 7-day supply-chain cooldown, releases, and a scheduled maintenance routine.",
       "category": "own"
     },
     {

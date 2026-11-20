@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "description": "Bundle for every project: craft-core plus superpowers, Matt Pocock's planning and DDD skills, and ponytail.",
+  "description": "Bundle for every project: craft-core and ops plus superpowers, Matt Pocock's planning and DDD skills, and ponytail.",
   "author": {
     "name": "Subash Pandey",
     "url": "https://github.com/notsubash"
@@ -13,6 +13,7 @@
   ],
   "dependencies": [
     "craft-core",
+    "ops",
     "superpowers",
     "matt-eng",
     "ponytail"
