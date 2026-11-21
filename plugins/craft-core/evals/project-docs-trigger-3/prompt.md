@@ -7,4 +7,4 @@ allowed_tools: ["Skill", "Read", "Glob", "Grep"]
 env: {"EVAL_CRAFT_DEEPEN": "off"}
 ---
 
-Start an ADR for choosing Postgres over SQLite and set up where decisions get recorded.
+Set up where decisions get recorded in this repo: a decision log and an ADR folder with an index. No decisions to write yet.
