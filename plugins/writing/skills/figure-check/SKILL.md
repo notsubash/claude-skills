@@ -1,6 +1,6 @@
 ---
 name: figure-check
-description: Verify every number, label, formula, axis, caption and factual claim in content before it's published - videos, charts, slides, docs, posts, comment replies - by recomputing each one in code from the definition or the data and listing anything wrong. Use when the user asks to make sure values, calculations, labels or formulas are accurate, "grounded in truth", factually correct, or to check a video, chart or reply for false information.
+description: Verify every number, label, formula, axis, caption and factual claim in content before it's published - Manim scenes and other videos, charts, slides, docs, posts, comment replies - by recomputing each one in code from the definition or the data and listing anything wrong. Use when the user asks to make sure values, calculations, labels or formulas are accurate, "grounded in truth", factually correct, to check the labels and values in a Manim scene against what it actually draws, or to check a video, chart or reply for false information.
 ---
 
 # Figure check
