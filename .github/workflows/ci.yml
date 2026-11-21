@@ -54,6 +54,10 @@ jobs:
         run: node scripts/completion-test.mjs
       - name: Versioning (update check, changelog entry for the package.json version)
         run: node scripts/version-test.mjs
+      - name: Hook rules (test guard, table-driven) and skill checker scripts
+        run: |
+          node scripts/hook-test.mjs
+          node scripts/script-test.mjs
       - name: Repo rules (pins, reviews, skill frontmatter, eval coverage)
         run: node scripts/ci-check.mjs
       - name: Install core into an empty project, check the exact skill set, uninstall, check git diff is empty
