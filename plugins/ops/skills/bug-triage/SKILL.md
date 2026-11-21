@@ -56,7 +56,7 @@ New test passes, full suite passes, the original repro steps pass in a prod-like
 
 - Reply to the reporter in plain words: what was wrong, that it's fixed, anything they need to do.
 - Link the commit or PR, add a **Fixed** changelog entry, close the duplicates.
-- User-facing outage or data loss: write a short blameless postmortem (timeline, impact, root cause, what detected it, action items with owners).
+- User-facing outage or data loss: write a blameless postmortem. If `incident-response` is available, use its template and `check-postmortem.mjs`; otherwise cover the timeline, impact, causes, what detected it, and owned action items.
 
 ## Triage a backlog
 
