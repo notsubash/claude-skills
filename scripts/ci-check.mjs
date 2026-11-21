@@ -81,5 +81,14 @@ for (const p of market.plugins) {
 }
 for (const r of catalog.RECIPES) for (const n of r.plugins) if (!names.has(n)) err(`recipe ${r.id}: plugin ${n} is not in the marketplace`);
 
+// 5. GitHub Actions are pinned to full commit SHAs, like third-party skills. Dependabot bumps them.
+const wf = join(REPO, '.github', 'workflows');
+for (const f of existsSync(wf) ? readdirSync(wf) : []) {
+  for (const [, action] of readFileSync(join(wf, f), 'utf8').matchAll(/^\s*-?\s*uses:\s*([^\s#]+)/gm)) {
+    if (action.startsWith('./') || action.startsWith('docker://')) continue;
+    if (!/@[0-9a-f]{40}$/.test(action)) err(`.github/workflows/${f}: ${action} must be pinned to a full commit SHA (add "# vX.Y.Z" after it)`);
+  }
+}
+
 if (errors.length) { console.error(errors.map((e) => `FAIL ${e}`).join('\n')); process.exit(1); }
 console.log(`ok  ${market.plugins.length} marketplace entries, ${reviewed.size} pinned third-party reviews, ${skillCount} own skills with eval coverage`);
