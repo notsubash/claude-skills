@@ -2,6 +2,26 @@
 
 What changed for people who use `skills`. Newest first. Each version is a git tag (`v1.0.0`) and a [GitHub release](https://github.com/notsubash/claude-skills/releases); `skills self-update` installs the latest one.
 
+## [Unreleased]
+
+### Added
+
+- **architecture-decisions** (craft-core): size a decision as a one-way or two-way door, name at most three measurable drivers, compare options including keeping what exists, spike the riskiest unknown, then write a one-page ADR with a confirmation check and revisit triggers. Also design docs, superseding and ADR review. `check-adrs.mjs` validates an ADR folder (numbering, status, supersede links, links, index).
+- **test-integrity** (craft-core): tests that would catch a real bug (public behavior, real dependencies, independent expected values, a failing test before each fix, proof each test can fail). Failing tests get fixed in the code, never by skipping, loosening or special-casing the test. `check-test-diff.mjs` checks a branch for weakened tests and for code that special-cases test inputs.
+- **Test guard hook** (craft-core): before an edit or command that weakens tests (skip, `.only`, a deleted test or assertion, excluded tests or a lowered coverage threshold in config, a masked exit code, `--no-verify`), Claude asks you first. `CRAFT_TEST_GUARD=enforce` blocks instead, `warn` only tells Claude, `off` turns it off.
+- **incident-response** (ops): declare, set severity, assign roles, mitigate first, post status updates on a cadence, hand off, then write a blameless postmortem. `check-postmortem.mjs` validates it.
+- Manim-based task evals for figure-check and human-voice.
+- `SECURITY.md` and issue forms for skill misfires, CLI bugs and third-party plugins.
+
+### Removed
+
+- **oss-portfolio** (oss). `skills add oss` now installs oss-contribute only.
+
+### Changed
+
+- project-docs sets up the ADR folder and index, and hands each decision's content to architecture-decisions.
+- GitHub Actions are pinned to commit SHAs and kept current by Dependabot with a 7-day cooldown. CI fails on an unpinned action.
+
 ## [1.0.2] - 2026-11-21
 
 ### Fixed

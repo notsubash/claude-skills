@@ -1,6 +1,6 @@
 {
   "name": "craft-core",
-  "description": "My own core skills and hooks: senior-pr, security-gate, project-docs, product-lens, deepen, plus the opt-in terse output style. No dependencies.",
+  "description": "My own core skills and hooks: senior-pr, security-gate, project-docs, product-lens, architecture-decisions, test-integrity, deepen, the push guard and test guard hooks, plus the opt-in terse output style. No dependencies.",
   "author": {
     "name": "Subash Pandey",
     "url": "https://github.com/notsubash"

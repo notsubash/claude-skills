@@ -10,12 +10,12 @@ export function loadMarketplace(repo) {
 // One line each, for lists and the picker. The marketplace description stays the long form.
 export const BLURB = {
   core: 'The everyday stack: craft-core + ops + superpowers + matt-eng + ponytail',
-  'craft-core': 'Senior PRs, security gate, project docs, product lens, deepen',
-  ops: 'Bug triage, observability, dependency updates, releases, maintenance',
+  'craft-core': 'Senior PRs, security gate, docs, product lens, ADRs, honest tests',
+  ops: 'Incidents, bug triage, observability, deps, releases, maintenance',
   web: 'UI/UX stack: craft-web + stageshow + charles + emil + playwright',
   'craft-web': 'ui-pipeline: critique → demo → unslop → polish → verify',
   security: 'Heavy engines: Anthropic security-guidance + Cloudflare audit',
-  oss: 'Contribute upstream the maintainers\' way, sync your PR portfolio',
+  oss: 'Contribute upstream the maintainers\' way',
   writing: 'Write in your own voice, recompute every number you publish',
   superpowers: 'Brainstorm → plan → TDD → subagent-driven development',
   'matt-eng': 'Grilling interviews, DDD, codebase design, specs and tickets',
@@ -48,7 +48,7 @@ export const THIRD_PARTY_SKILLS = {
 
 // What runs without being asked. Shown before install so nothing is a surprise.
 export const HOOKS = {
-  'craft-core': 'first-prompt deepen (CRAFT_DEEPEN=off) + push guard on git push / gh pr create',
+  'craft-core': 'first-prompt deepen (CRAFT_DEEPEN=off) + push guard on git push / gh pr create + test guard asks before tests are weakened (CRAFT_TEST_GUARD)',
   superpowers: 'SessionStart: injects using-superpowers into every session',
   ponytail: 'SessionStart ruleset + codebase map, SubagentStart, status band',
   'security-guidance': 'every edit and turn: pattern warnings + LLM diff review (pip install, network)',

@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/notsubash/claude-skills/actions/workflows/ci.yml"><img src="https://github.com/notsubash/claude-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/skills-15_own_·_37_pinned-f5a623" alt="skills">
+  <img src="https://img.shields.io/badge/skills-17_own_·_37_pinned-f5a623" alt="skills">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.300-1b1e24" alt="Claude Code ≥ 2.1.300">
   <img src="https://img.shields.io/badge/runs_on-Windows_·_macOS_·_Linux-1b1e24" alt="Windows, macOS and Linux">
 </p>
@@ -99,7 +99,7 @@ After any install: restart Claude Code, or run `/reload-plugins` in an open sess
 
 ## Set up once per machine
 
-Needs **Node 22+**, **git**, and **Claude Code ≥ 2.1.300** (`npm i -g @anthropic-ai/claude-code@latest`). `gh` is optional (used by `update --dry-run` and oss-portfolio). Works the same in PowerShell, cmd, bash and zsh on Windows, macOS and Linux; CI tests all three OSes.
+Needs **Node 22+**, **git**, and **Claude Code ≥ 2.1.300** (`npm i -g @anthropic-ai/claude-code@latest`). `gh` is optional (used by `update --dry-run`). Works the same in PowerShell, cmd, bash and zsh on Windows, macOS and Linux; CI tests all three OSes.
 
 | I want to… | Run | Update it later |
 |---|---|---|
@@ -153,7 +153,7 @@ skills info <name>    # one plugin or skill: its skills, hooks, safeguards, pin,
 
 | Bundle | Brings | Skills |
 |---|---|---|
-| **core** | craft-core + ops + [superpowers](https://github.com/obra/superpowers) + [matt-eng](https://github.com/mattpocock/skills) + [ponytail](https://github.com/DietrichGebert/ponytail) | 39 |
+| **core** | craft-core + ops + [superpowers](https://github.com/obra/superpowers) + [matt-eng](https://github.com/mattpocock/skills) + [ponytail](https://github.com/DietrichGebert/ponytail) | 42 |
 | **web** | craft-web + [stageshow](https://github.com/benjitaylor/skills) + [charles-design](https://github.com/LemonFace0309/charles-skills) + [emil-design-eng](https://github.com/emilkowalski/skills) + [playwright-cli](https://github.com/microsoft/playwright-cli). [impeccable](https://github.com/pbakaus/impeccable) is opt-in | 6 |
 | **security** | Anthropic's [security-guidance](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/security-guidance) hooks + Cloudflare's [security-audit](https://github.com/cloudflare/security-audit-skill) | 1 + hooks |
 
@@ -161,10 +161,10 @@ skills info <name>    # one plugin or skill: its skills, hooks, safeguards, pin,
 
 | Plugin | Skills |
 |---|---|
-| **craft-core** | senior-pr, security-gate, project-docs, product-lens, deepen + the first-prompt hook, the push guard and the `terse` output style |
-| **ops** | bug-triage, observability, dep-upgrade, release, maintenance-routine |
+| **craft-core** | senior-pr, security-gate, project-docs, product-lens, architecture-decisions, test-integrity, deepen + the first-prompt hook, the push guard, the test guard and the `terse` output style |
+| **ops** | incident-response, bug-triage, observability, dep-upgrade, release, maintenance-routine |
 | **craft-web** | ui-pipeline |
-| **oss** | oss-contribute, oss-portfolio |
+| **oss** | oss-contribute |
 | **writing** | human-voice, figure-check |
 
 Every third-party plugin also installs on its own (`skills add playwright-cli`). Naming a skill installs the plugin that ships it (`skills add brainstorming` → superpowers), since Claude Code installs plugins, not single skills.
@@ -178,8 +178,11 @@ Skills trigger on their own when what you type matches their description. These 
 | **deepen** · craft-core | Rewrites your first prompt of each session into the version a top professional would write, then waits for your OK. Manual otherwise. | *(automatic on the first prompt)* · `/craft-core:deepen <prompt>` · start a prompt with `!raw` to skip |
 | **product-lens** · craft-core | Evidence vs assumptions, the user and pain, outcome metric with guardrails, options incl. do nothing, appetite, thin slice, kill criterion → build / test first / don't build | "is this feature worth building?", "what should we build next?", "review this PRD", "prep customer interviews" |
 | **project-docs** · craft-core | Interviews you, then writes only the docs the project needs: lean CLAUDE.md, PRODUCT.md, decision log + ADRs, glossary, backlog | "set up the docs", "create a CLAUDE.md", "our CLAUDE.md is bloated" |
+| **architecture-decisions** · craft-core | Door size → at most three measurable drivers → options incl. keep-what-exists → spike → one-page ADR with a confirmation check (fitness function) and revisit triggers; design docs, superseding, ADR review. `check-adrs.mjs` validates the folder | "Postgres queue or Redis?", "write an ADR", "design doc for splitting the monolith", "review this ADR" |
+| **test-integrity** · craft-core | Tests that would catch a real bug: public behavior, real dependencies, independent expected values, a failing test before every fix, proof each test can fail. Failing tests get fixed in the code, never by skipping, loosening or special-casing them. `check-test-diff.mjs` checks the branch | "add tests for X", "get CI green", "make the tests pass", "are these tests any good?" |
 | **security-gate** · craft-core | Scans the branch diff for secrets, vulnerable deps and risky paths; writes a CLEARED/BLOCKED report the push guard checks | "security check before I push", "clear this branch", "run the gate" |
 | **senior-pr** · craft-core | One focused conventional commit per logical change, and a PR body with what, why, risk and how it was tested | "commit this", "raise a PR", "give the PR body", "make this PR senior" |
+| **incident-response** · ops | Declare → severity → roles → mitigate first (rollback, flag off) → status updates on a cadence → handoff → blameless postmortem with sourced timeline and owned, ticketed actions. `check-postmortem.mjs` validates it | "checkout is down", "we're getting 500s since the deploy", "status page update", "write the postmortem" |
 | **bug-triage** · ops | Report → evidence → severity → minimal repro (bisect) → failing test → root-cause fix → data repair → reply | paste a stack trace, Sentry issue or ticket; "this is broken in prod" |
 | **observability** · ops | Wide events, golden signals, SLOs and error budgets, burn-rate alerts with runbooks | "add logging/monitoring", "set up Sentry/OpenTelemetry", "define SLOs", "too many alerts" |
 | **dep-upgrade** · ops | 7-day release-age cooldown, install scripts off, lockfile review, majors one at a time, compromise response | "update dependencies", "set up Renovate", "fix this CVE", "are we hit by the X compromise?" |
@@ -187,9 +190,8 @@ Skills trigger on their own when what you type matches their description. These 
 | **maintenance-routine** · ops | Weekly / monthly / quarterly checks → red-amber-green report with owned actions; can schedule itself | "weekly maintenance check", "health review", "schedule recurring checks" |
 | **ui-pipeline** · craft-web | Direction & critique → stageshow demos → charles-unslop → emil polish, verified with playwright screenshots | "redesign this page", "this UI looks generic / AI-made", "polish the animations" |
 | **oss-contribute** · oss | Fork + upstream, contribution rules, pick and scope an issue, test-first fix, PR in the project's conventions; teaches as it goes | "I forked X, want to contribute", "which issue should I take?" |
-| **oss-portfolio** · oss | Lists your merged PRs from GitHub and updates your contributions page or CV | "my merged PRs", "update my OSS contributions page" |
-| **human-voice** · writing | Several short drafts in your voice, every claim checked against the source | "make it sound like me", "reply to this comment", "answer this application question" |
-| **figure-check** · writing | Recomputes every number, label, axis and formula in code before you publish | "check the numbers in this chart/video/post", "is this factually right?" |
+| **human-voice** · writing | Drafts in your voice (video narration, replies, posts), every claim checked against the source | "make it sound like me", "reply to this comment", "answer this application question" |
+| **figure-check** · writing | Recomputes every number, label, axis and formula in code before you publish, reading the Manim scene source against what it draws | "check the numbers in this chart/video/post", "is this factually right?" |
 
 **Third-party highlights** (in core/web): `superpowers:brainstorming` → `writing-plans` → `test-driven-development` / `subagent-driven-development`; `matt-eng:grill-with-docs` (interviews you, writes ADRs), `to-spec`, `to-tickets`, `domain-modeling`; `ponytail` (keeps solutions simple; `/ponytail-review`); `charles-unslop`, `emil-design-eng`, `playwright-cli`, `stageshow`. Full read-throughs in [third_party/REVIEW.md](third_party/REVIEW.md).
 
@@ -201,13 +203,14 @@ Skills trigger on their own when what you type matches their description. These 
 |---|---|
 | 1. **Think** | `deepen` hook on the first prompt → `grill-with-docs` interview, ADRs, glossary |
 | 2. **Decide what to build** | `product-lens` → build, test first, or don't build |
+| 2b. **Decide how** | `architecture-decisions` for one-way doors → design doc and ADRs, with fitness functions in CI |
 | 3. **Document** | `project-docs` |
 | 4. **Plan** | superpowers `brainstorming` → `writing-plans`, or `to-spec` → `to-tickets` |
-| 5. **Build** | `test-driven-development`, `subagent-driven-development`, `domain-modeling`, `codebase-design`, ponytail |
+| 5. **Build** | `test-integrity` (with the test guard hook), `test-driven-development`, `subagent-driven-development`, `domain-modeling`, `codebase-design`, ponytail |
 | 6. **UI** | `ui-pipeline` (impeccable if installed → stageshow → charles-unslop → emil-design-eng → playwright-cli) |
 | 7. **Ship** | `security-gate` → push guard on `git push` / `gh pr create` → `senior-pr` |
 | 8. **Release** | `release` |
-| 9. **Run it** | `observability`, `bug-triage`, `dep-upgrade`, `maintenance-routine` on a schedule |
+| 9. **Run it** | `incident-response` when it's down, `observability`, `bug-triage`, `dep-upgrade`, `maintenance-routine` on a schedule |
 
 ---
 
@@ -249,6 +252,7 @@ Output turns colorless when piped, in CI, or with `NO_COLOR=1`. In a shell witho
 |---|---|
 | `CRAFT_DEEPEN=off` | Turn off the first-prompt deepen hook everywhere. A prompt starting with `!raw` skips it for that session |
 | `CRAFT_SECURITY_GATE=warn` *(default)* · `enforce` · `off` | Push guard: warn when HEAD has no CLEARED report, block it, or stay silent |
+| `CRAFT_TEST_GUARD=ask` *(default)* · `enforce` · `warn` · `off` | Test guard: before an edit or command that weakens tests (skip, `.only`, deleted test or assertion, excluded tests or lowered coverage in config, `\|\| true` on a test run, `--no-verify`), ask you, block it, only tell Claude, or stay silent. Changed expected values and swallowed errors go through, but Claude is told to explain them |
 | Output style `craft-core:terse` | Short replies: answer first, one recommendation, never drops warnings. Pick it in `/config` → Output style, or `"outputStyle": "craft-core:terse"` |
 
 Put the `CRAFT_*` switches in your shell profile or the `env` block of `~/.claude/settings.json`.

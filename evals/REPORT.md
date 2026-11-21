@@ -8,15 +8,22 @@ Claude Code 2.1.328, run 2026-11-19, 2/3 runs per case and arm, list-price cost 
 
 | Skill | Trigger | No-trigger | Task with | Task without | Δ |
 |---|---|---|---|---|---|
+| architecture-decisions | 100% (9/9) | 100% (9/9) | 1.00 | 0.67 | +0.33 |
+| bug-triage · ops | not run | not run | not run | not run | - |
 | deepen | n/a (manual only) | 100% (6/6) | 1.00 | 0.00 | +1.00 |
+| dep-upgrade · ops | not run | not run | not run | not run | - |
 | figure-check | 100% (6/6) | 100% (6/6) | 1.00 | 1.00 | +0.00 |
 | human-voice | 100% (6/6) | 100% (6/6) | 1.00 | 1.00 | +0.00 |
+| incident-response · ops | not run | not run | not run | not run | - |
+| maintenance-routine · ops | not run | not run | not run | not run | - |
+| observability · ops | not run | not run | not run | not run | - |
 | oss-contribute | 100% (6/6) | 100% (6/6) | 1.00 | 1.00 | +0.00 |
-| oss-portfolio | 100% (6/6) | 100% (6/6) | 1.00 | 0.67 | +0.33 |
 | product-lens | 100% (12/12) | 100% (9/9) | 1.00 | 0.33 | +0.67 |
 | project-docs | 100% (6/6) | 100% (6/6) | 1.00 | 0.33 | +0.67 |
+| release · ops | not run | not run | not run | not run | - |
 | security-gate | 100% (6/6) | 100% (6/6) | 0.67 | 0.00 | +0.67 |
 | senior-pr | 100% (6/6) | 100% (6/6) | 1.00 | 0.50 | +0.50 |
+| test-integrity | not run | not run | not run | not run | - |
 | ui-pipeline | 100% (6/6) | 100% (6/6) | 0.67 | 0.33 | +0.33 |
 
 ## Cases below 100%
@@ -26,6 +33,9 @@ Claude Code 2.1.328, run 2026-11-19, 2/3 runs per case and arm, list-price cost 
 
 ## Notes
 
+- **architecture-decisions was added later**, run separately on 2026-11-21 (3 runs per case and arm, list-price $3.53, Claude Code 2.1.328). Its row was merged in by hand. Per case: `task-1` (choose a job queue and draft the ADR) scored 1.00 with the skill and 0.33 without, every run. Without the skill, the base model chose the same option (a Postgres-backed queue), and the judge failed all three runs. The judge doesn't give per-criterion reasons. The visible difference is length: the no-skill ADRs were 7.6k to 8.4k characters, about three pages, against the one-page criterion. `task-2` (review a weak microservices ADR) scored 1.00 in both arms, so the base model already reviews well and the skill's value is in writing the decision, not critiquing it.
+- **Not run yet** (cases exist, no results): all five ops skills, the new incident-response and test-integrity skills, and the Manim-based task cases `figure-check-task-2` and `human-voice-task-2`. The table shows results only where a `claude plugin eval --json` run exists. Run them with the CI `evals` workflow (`workflow_dispatch`, evals: true) or locally, then regenerate the rows.
+- **oss-portfolio was removed** (2026-11-21), so its row is gone. Its earlier result (trigger 6/6, no-trigger 6/6, task Δ +0.33) is in the git history.
 - **Small samples.** Each cell is 2 runs per case (3 for the writing tasks), and each skill has a single task case. Read the deltas as direction, not as significance. A score of 0.67 means one run in two or three missed one judge criterion.
 - **Run on Windows, locally**, with my Claude plan (list-price estimate above). The LLM judge is the default Haiku. Shell tools weren't granted: native Windows has no eval sandbox, so figure-check reasoned without running Python.
 - **Re-runs after fixes.** The first pass failed for these reasons, and the table shows the runs after each fix:
@@ -33,6 +43,6 @@ Claude Code 2.1.328, run 2026-11-19, 2/3 runs per case and arm, list-price cost 
   - senior-pr's "no internal words" regex also matched explanations that mention leaving them out. The regex was dropped; the judge criterion covers it.
   - oss-contribute's criteria were worded as actions ("writes a test"), so plans failed. Reworded to "the plan includes".
   - human-voice scored 0.50 with the skill vs 1.00 without, because it gave 2–3 drafts when asked for one reply. **The skill was changed** to give one draft when one is asked for, and it now scores 1.00.
-- **Δ = 0** for figure-check, human-voice and oss-contribute: the base model already passes these tasks, so they don't yet show what the skills add. Harder task cases are the next step for these three.
+- **Δ = 0** for figure-check, human-voice and oss-contribute: the base model already passes these tasks, so they don't yet show what the skills add. figure-check and human-voice are for checking labels and values in Manim videos and for writing in my voice, so each now has a second task case built on that: a Manim scene whose labels disagree with the plotted curve, and narration for a video intro with only given facts allowed. These should separate the arms better than the textbook-stats cases.
 - **product-lens was added later**, run separately on 2026-11-20 after the rewrite into a product-minded-engineer workflow (3 runs per case and arm, list-price $2.41, Claude Code 2.1.328). Its row was merged into the table above by hand. Four trigger cases, including customer-interview prep. Without the skill, all 3 task runs gave a decision but failed the judge on separating evidence from assumptions, a cheap test before the 4-day build, and a metric with a baseline.
 - **Isolation.** Trigger cases load only the plugin under test. In a real session with superpowers, Matt Pocock's skills and the built-ins loaded together, collisions (for example senior-pr vs superpowers:finishing-a-development-branch) aren't measured here.
