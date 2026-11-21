@@ -1,0 +1,32 @@
+name: Third-party plugin
+description: Suggest a plugin to pin, ask for a pin bump, or raise a concern about a pinned one.
+title: "third-party: "
+labels: [third-party]
+body:
+  - type: markdown
+    attributes:
+      value: For anything that looks malicious or exploitable, use private security reporting instead (see SECURITY.md).
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Request
+      options:
+        - Pin a new plugin
+        - Bump a pinned plugin to a newer commit
+        - Concern about a pinned plugin
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Upstream repo and commit
+      placeholder: https://github.com/owner/repo @ <full SHA>
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What it adds, or what changed or worries you. Note any hooks, scripts or network access you know about.
+    validations:
+      required: true

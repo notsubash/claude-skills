@@ -1,0 +1,53 @@
+name: A skill misfired
+description: A skill didn't load when it should have, loaded when it shouldn't, or gave a bad result.
+title: "skill: <skill name> "
+labels: [skill]
+body:
+  - type: markdown
+    attributes:
+      value: Each report like this becomes an eval case (`plugins/<plugin>/evals/`), so the exact prompt matters most.
+  - type: input
+    id: skill
+    attributes:
+      label: Skill
+      placeholder: craft-core:senior-pr
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong
+      options:
+        - It didn't load, but it should have
+        - It loaded, but it shouldn't have
+        - It loaded, but the result was wrong or weak
+        - It clashed with another skill
+    validations:
+      required: true
+  - type: textarea
+    id: prompt
+    attributes:
+      label: The exact prompt
+      description: Paste what you typed, word for word. Remove anything private.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+    validations:
+      required: true
+  - type: textarea
+    id: others
+    attributes:
+      label: Other plugins enabled
+      description: Output of `skills list`, or the plugins you have on. Collisions with superpowers and other skills aren't covered by the evals yet.
+      render: text
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: "skills 1.0.2, Claude Code 2.1.328"
+    validations:
+      required: true
