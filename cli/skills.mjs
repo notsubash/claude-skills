@@ -774,7 +774,9 @@ async function selfUpdate() {
     update.writeCache(UPDATE_CACHE, { checked: Date.now(), latest });
     if (!update.newer(latest, VERSION) && !flag('force')) { s.succeed(`already on the latest release ${c.gray(`(${VERSION})`)}`); return; }
     s.succeed(`latest release ${c.bold(latest)}`);
-    const spec = `github:${DEFAULT_SOURCE}#v${latest}`;
+    // `#semver:<exact>` resolves the tag over https. A plain `#v1.2.3` makes npm try git over ssh,
+    // which fails (or hangs) for anyone without a GitHub ssh key.
+    const spec = `github:${DEFAULT_SOURCE}#semver:${latest}`;
     const i = ui.spinner(`npm i -g ${spec}`);
     const r = await runAsync('npm', ['i', '-g', spec]);
     if (r.status) { i.fail(); die((r.stderr || r.stdout).trim()); }

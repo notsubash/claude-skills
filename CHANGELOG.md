@@ -2,6 +2,13 @@
 
 What changed for people who use `skills`. Newest first. Each version is a git tag (`v1.0.0`) and a [GitHub release](https://github.com/notsubash/claude-skills/releases); `skills self-update` installs the latest one.
 
+## [1.0.2] - 2026-11-21
+
+### Fixed
+
+- `skills self-update` failed with `Permission denied (publickey)`, or hung, for anyone without a GitHub ssh key: npm fetched the release tag over ssh. It now installs `github:notsubash/claude-skills#semver:<version>`, which goes over https.
+- On 1.0.0 or 1.0.1? Update once by hand: `npm i -g github:notsubash/claude-skills#semver:x`. `skills self-update` works from then on.
+
 ## [1.0.1] - 2026-11-20
 
 ### Fixed
@@ -38,5 +45,6 @@ The first release.
 - Own bundles: **core**, **craft-core** (senior PRs, security gate, project docs, product lens, deepen), **craft-web**, **web**, **security**, **oss**, **writing** and **ops**.
 - Pinned third-party plugins: superpowers, matt-eng, ponytail, security-guidance, security-audit, skill-creator, playwright-cli, impeccable, stageshow, charles-design and emil-design-eng.
 
+[1.0.2]: https://github.com/notsubash/claude-skills/releases/tag/v1.0.2
 [1.0.1]: https://github.com/notsubash/claude-skills/releases/tag/v1.0.1
 [1.0.0]: https://github.com/notsubash/claude-skills/releases/tag/v1.0.0
