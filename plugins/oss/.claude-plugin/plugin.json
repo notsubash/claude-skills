@@ -1,6 +1,6 @@
 {
   "name": "oss",
-  "description": "Open-source contribution flow and merged-PR portfolio sync.",
+  "description": "Open-source contribution flow: fork, scope an issue, test-first fix, PR in the project's conventions.",
   "author": { "name": "Subash Pandey", "url": "https://github.com/notsubash" },
   "repository": "https://github.com/notsubash/claude-skills",
   "license": "MIT",
