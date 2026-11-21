@@ -44,4 +44,4 @@ Follow the repo's format. If there isn't one, use the `senior-pr` skill from cra
 
 ## 5. After the PR
 
-Once it's merged: delete the branch and any worktree, then sync `main` from upstream. If the user keeps a portfolio of contributions, offer `oss-portfolio`.
+Once it's merged: delete the branch and any worktree, then sync `main` from upstream.

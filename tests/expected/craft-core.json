@@ -3,10 +3,12 @@
     "craft-core"
   ],
   "skills": [
+    "craft-core:architecture-decisions",
     "craft-core:deepen",
     "craft-core:product-lens",
     "craft-core:project-docs",
     "craft-core:security-gate",
-    "craft-core:senior-pr"
+    "craft-core:senior-pr",
+    "craft-core:test-integrity"
   ]
 }

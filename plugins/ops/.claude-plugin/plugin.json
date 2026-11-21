@@ -1,6 +1,6 @@
 {
   "name": "ops",
-  "description": "Running an app after launch: bug triage, observability, dependency updates with a supply-chain cooldown, releases, and a scheduled maintenance routine.",
+  "description": "Running an app after launch: incident response and postmortems, bug triage, observability, dependency updates with a supply-chain cooldown, releases, and a scheduled maintenance routine.",
   "author": { "name": "Subash Pandey", "url": "https://github.com/notsubash" },
   "repository": "https://github.com/notsubash/claude-skills",
   "license": "MIT",

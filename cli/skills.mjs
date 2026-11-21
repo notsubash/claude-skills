@@ -549,7 +549,7 @@ function cmdDoctor() {
   check(node[0] >= 22, `Node ${process.versions.node} ${c.gray('(need ≥ 22)')}`, 'install Node 22 LTS');
   check(runSync('git', ['--version'], { allowFail: true }).status === 0, 'git on PATH');
   const gh = runSync('gh', ['--version'], { allowFail: true }).status === 0;
-  if (gh) ui.ok(`gh on PATH ${c.gray('(update --dry-run, oss-portfolio)')}`); else ui.warn(`gh not found ${c.gray('(optional: update --dry-run, oss-portfolio) https://cli.github.com')}`);
+  if (gh) ui.ok(`gh on PATH ${c.gray('(update --dry-run)')}`); else ui.warn(`gh not found ${c.gray('(optional: update --dry-run) https://cli.github.com')}`);
   if (WIN) check(runSync('bash', ['--version'], { allowFail: true }).status === 0, `Git Bash ${c.gray('(some third-party hooks are sh scripts)')}`, 'install Git for Windows');
   const shell = completion.detectShell();
   if (completion.SHELLS.includes(shell)) {

@@ -1,6 +1,6 @@
 ---
 name: project-docs
-description: Set up or repair a project's working docs - a lean CLAUDE.md, PRODUCT.md, a decision log with ADRs, a glossary, and a backlog - by interviewing the user first, then writing only the docs the project needs. Use when starting a new repo, when the user asks to "set up the docs", create CLAUDE.md, write a PRD or product brief, start a decision log or ADRs, or when an existing CLAUDE.md is bloated or stale.
+description: Set up or repair a project's working docs - a lean CLAUDE.md, PRODUCT.md, a decision log with ADRs, a glossary, and a backlog - by interviewing the user first, then writing only the docs the project needs. Use when starting a new repo, when the user asks to "set up the docs", create CLAUDE.md, write a PRD or product brief, start a decision log or an ADR folder, or when an existing CLAUDE.md is bloated or stale. Not for making or writing up a specific architecture decision (use architecture-decisions).
 ---
 
 # Project docs
@@ -31,7 +31,7 @@ Push back on vague answers. "Fast" isn't a requirement. "p95 under 300 ms on the
 | `CLAUDE.md` | Always | Under 100 lines: a one-line purpose, the doc map (table), non-negotiables, the commands table (command, what it does, cost or risk), conventions (branches, commits, PRs), the current state. Link out instead of inlining. |
 | `PRODUCT.md` | Anything user-facing | Problem, users, the success metric, scope and non-goals, key flows, open questions. |
 | `docs/decision-log.md` | Any decision you might revisit | A table: date, decision, why, alternatives, revisit-when, link. |
-| `docs/adr/NNNN-title.md` | Decisions that are expensive to reverse | Context, decision, consequences. One per file, numbered. |
+| `docs/adr/` | Decisions that are expensive to reverse | One numbered file per decision plus a `README.md` index. Create the folder and index here; for each ADR's content, use `architecture-decisions` if it's available (drivers, options, confirmation, revisit triggers). |
 | `GLOSSARY.md` | A domain with its own words | Term, meaning, the code name it maps to. If `domain-modeling` is available, use it here. |
 | `docs/backlog.md` | Work deferred on purpose | An item, why it was deferred, and the trigger to pick it up. |
 
