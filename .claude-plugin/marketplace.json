@@ -189,6 +189,45 @@
       },
       "description": "Third-party (Emil Kowalski, MIT). Design engineering principles for UI polish and motion. Review: third_party/REVIEW.md#emil-design-eng",
       "category": "third-party"
+    },
+    {
+      "name": "context7",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/upstash/context7.git",
+        "path": "skills",
+        "sha": "b1e3611e32a8b1369ae526cacdf335ddfd6e5fbb"
+      },
+      "strict": false,
+      "skills": [
+        "./context7-mcp"
+      ],
+      "mcpServers": {
+        "context7": {
+          "type": "http",
+          "url": "https://mcp.context7.com/mcp?client=claude-code-plugin"
+        }
+      },
+      "description": "Third-party (Upstash, MIT). Current, version-specific library docs through Context7's hosted MCP server, plus the context7-mcp skill that tells the model when to use it. Sends your library name and question to mcp.context7.com. Sign in once with /mcp. Review: third_party/REVIEW.md#context7",
+      "category": "third-party"
+    },
+    {
+      "name": "caveman",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/JuliusBrussee/caveman.git",
+        "path": "skills",
+        "sha": "a192894723a8f47e7f504c7b5041967ff1f18e55"
+      },
+      "strict": false,
+      "skills": [
+        "./caveman",
+        "./ultracave",
+        "./megacave",
+        "./caveman-help"
+      ],
+      "description": "Third-party (Julius Brussee, Apache-2.0), a subset: the caveman, ultracave and megacave voices plus caveman-help. Upstream hooks are left out, so it is off until you type /caveman. Review: third_party/REVIEW.md#caveman",
+      "category": "third-party"
     }
   ]
 }

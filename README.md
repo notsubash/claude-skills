@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/notsubash/claude-skills/actions/workflows/ci.yml"><img src="https://github.com/notsubash/claude-skills/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/skills-17_own_·_37_pinned-f5a623" alt="skills">
+  <img src="https://img.shields.io/badge/skills-17_own_·_42_pinned-f5a623" alt="skills">
   <img src="https://img.shields.io/badge/Claude_Code-%E2%89%A5_2.1.300-1b1e24" alt="Claude Code ≥ 2.1.300">
   <img src="https://img.shields.io/badge/runs_on-Windows_·_macOS_·_Linux-1b1e24" alt="Windows, macOS and Linux">
 </p>
@@ -49,6 +49,7 @@ skills add writing --global     # available in every project
 
 - [Quick start](#quick-start)
 - [Which path do I take?](#which-path-do-i-take) ← for specific situations
+- [Playbook: which skill, when](docs/playbook.md) ← what to type for a new project, an existing repo, an LLM feature, an incident, …
 - [Set up once per machine](#set-up-once-per-machine)
 - [Scopes: shared, just me, everywhere](#scopes-shared-just-me-everywhere)
 - [What's inside](#whats-inside) and [how to use each skill](#how-to-use-each-skill)
@@ -86,11 +87,14 @@ flowchart TD
 | **Running an app in production** | `skills use live-app` | shared | two files to commit |
 | **Shipping something risky** | `skills use security` | shared | two files to commit |
 | Wanting a skill **everywhere** (writing, skill-creator) | `skills add writing --global` | global | nothing (lives in `~/.claude/`) |
+| Wanting **current library docs** and an on-demand **terse voice** in every project | `skills add context7 caveman --global`, then `/mcp` → context7 → sign in | global | nothing |
 | On a **fresh clone or new machine** | `skills` (offers to download) or `skills sync` | whatever the repo declares | nothing, it downloads what settings enable |
 | **Editing a skill** in this repo and testing it | `skills add craft-core --local --source local` | just me | nothing; edits apply on `/reload-plugins` |
 | **Done with it** | `skills` → *Review or remove*, or `skills remove core` | the one it's in | everything it added is removed |
 
 After any install: restart Claude Code, or run `/reload-plugins` in an open session.
+
+Once installed, [docs/playbook.md](docs/playbook.md) walks through what to type, step by step, for each of these situations.
 
 > [!TIP]
 > Not sure? Just run `skills`. It shows what's already enabled in each scope, suggests a scope from the folder (git repo → shared, home folder → global), shows each plugin's skills, hooks and safeguards before you pick it, and prints a plan before changing anything.
@@ -193,7 +197,9 @@ Skills trigger on their own when what you type matches their description. These 
 | **human-voice** · writing | Drafts in your voice (video narration, replies, posts), every claim checked against the source | "make it sound like me", "reply to this comment", "answer this application question" |
 | **figure-check** · writing | Recomputes every number, label, axis and formula in code before you publish, reading the Manim scene source against what it draws | "check the numbers in this chart/video/post", "is this factually right?" |
 
-**Third-party highlights** (in core/web): `superpowers:brainstorming` → `writing-plans` → `test-driven-development` / `subagent-driven-development`; `matt-eng:grill-with-docs` (interviews you, writes ADRs), `to-spec`, `to-tickets`, `domain-modeling`; `ponytail` (keeps solutions simple; `/ponytail-review`); `charles-unslop`, `emil-design-eng`, `playwright-cli`, `stageshow`. Full read-throughs in [third_party/REVIEW.md](third_party/REVIEW.md).
+**Third-party highlights** (in core/web): `superpowers:brainstorming` → `writing-plans` → `test-driven-development` / `subagent-driven-development`; `matt-eng:grill-with-docs` (interviews you, writes ADRs), `to-spec`, `to-tickets`, `domain-modeling`; `ponytail` (keeps solutions simple; `/ponytail-review`); `charles-unslop`, `emil-design-eng`, `playwright-cli`, `stageshow`.
+
+**Standalone, best installed globally:** `context7` (current, version-specific library docs through Context7's hosted MCP server; name the version, or say "use context7"); `caveman` (`/caveman` for a terse voice, `/ultracave` for real token savings, `stop caveman` to end; upstream's hooks left out, so it's off until you ask). Full read-throughs in [third_party/REVIEW.md](third_party/REVIEW.md).
 
 ---
 
@@ -206,7 +212,7 @@ Skills trigger on their own when what you type matches their description. These 
 | 2b. **Decide how** | `architecture-decisions` for one-way doors → design doc and ADRs, with fitness functions in CI |
 | 3. **Document** | `project-docs` |
 | 4. **Plan** | superpowers `brainstorming` → `writing-plans`, or `to-spec` → `to-tickets` |
-| 5. **Build** | `test-integrity` (with the test guard hook), `test-driven-development`, `subagent-driven-development`, `domain-modeling`, `codebase-design`, ponytail |
+| 5. **Build** | `test-integrity` (with the test guard hook), `test-driven-development`, `subagent-driven-development`, `domain-modeling`, `codebase-design`, ponytail, `context7` for any library API |
 | 6. **UI** | `ui-pipeline` (impeccable if installed → stageshow → charles-unslop → emil-design-eng → playwright-cli) |
 | 7. **Ship** | `security-gate` → push guard on `git push` / `gh pr create` → `senior-pr` |
 | 8. **Release** | `release` |
@@ -267,7 +273,7 @@ Every third-party plugin was read line by line before adoption ([third_party/REV
 | playwright-cli | deny `playwright-cli attach`; ask before cookie, state, `run-code`, `kill-all`, `delete-data` | Never attach to your everyday browser profile |
 | impeccable | not in any bundle; refuses without `--accept-impeccable` (the picker asks) | Its hooks run an unreviewable prebuilt binary with network access on every edit |
 
-Two things stay manual: decline ponytail's offer to add a statusLine, and decline impeccable's account sign-in if you install it.
+Three things stay manual: decline ponytail's offer to add a statusLine, decline impeccable's account sign-in if you install it, and sign in to context7 once through `/mcp` (it shows `needs-auth` until you do). In client repos, keep context7 lookups to generic library questions: the query goes to Context7's servers.
 
 ---
 
@@ -383,6 +389,7 @@ plugins/<name>/                   own plugins (craft-core, craft-web, ops, oss, 
 cli/skills.mjs                    the CLI (bin/skills, skills.cmd, skills.ps1 are shims)
 cli/lib/                          catalog.mjs (blurbs, scenarios), picker.mjs (prompts), ui.mjs (look), scan.mjs (vet), completion.mjs (Tab), update.mjs (update check)
 third_party/                      manifest.json + REVIEW.md: one review per pin
+docs/playbook.md                  which skill to use when, scenario by scenario
 scripts/                          ci-check, install-test, completion-test, version-test, release, eval-report, readme-assets
 templates/                        new-skill templates
 tests/expected/                   exact skill sets an install must produce

@@ -28,6 +28,8 @@ export const BLURB = {
   stageshow: 'Faux product UI and cursor demos in React/CSS',
   'charles-design': 'charles-unslop + charles-polish: remove the AI look',
   'emil-design-eng': 'Design-engineering details for UI polish and motion',
+  context7: 'Current, version-specific library docs over MCP (sign in with /mcp)',
+  caveman: 'Terse caveman voice on demand: /caveman, /ultracave, stop caveman',
 };
 
 // Skills inside third-party plugins (own plugins are read from disk). Kept in step with
@@ -44,6 +46,8 @@ export const THIRD_PARTY_SKILLS = {
   'charles-design': ['charles-unslop', 'charles-polish'],
   'emil-design-eng': ['emil-design-eng'],
   'security-guidance': [],
+  context7: ['context7-mcp'],
+  caveman: ['caveman', 'ultracave', 'megacave', 'caveman-help'],
 };
 
 // What runs without being asked. Shown before install so nothing is a surprise.

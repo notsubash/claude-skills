@@ -1,6 +1,6 @@
 # Third-party reviews
 
-Every non-binary file of every pinned third-party plugin was read line by line on 2026-11-19, by 13 reader subagents (Opus 5.5 at medium effort for code, Haiku 5.5 for Markdown and tests) working in fresh contexts on checkouts of the exact pinned commits. Nothing was executed. Claims marked **verified** were re-checked by hand against the source. `manifest.json` holds the machine-readable summary.
+Every non-binary file of every pinned third-party plugin was read line by line on 2026-11-19, by 13 reader subagents (Opus 5.5 at medium effort for code, Haiku 5.5 for Markdown and tests) working in fresh contexts on checkouts of the exact pinned commits. Nothing was executed. Claims marked **verified** were re-checked by hand against the source. `manifest.json` holds the machine-readable summary. [context7](#context7) and [caveman](#caveman) were added on 2026-11-22 and read the same way, in one session.
 
 **Bottom line:** nothing malicious anywhere. The findings are about defaults, cost, privacy and how hard some skills push the model. The settings recommended below are listed in [Recommended settings](#recommended-settings).
 
@@ -17,6 +17,8 @@ Every non-binary file of every pinned third-party plugin was read line by line o
 | [stageshow](#stageshow) | 369 (~53k) | adopt with notes | Asks to `npm i -D playwright-core` in your project; app-icon artwork isn't MIT |
 | [charles-design](#charles-design) | 8 (~0.9k) | adopt | Markdown only |
 | [emil-design-eng](#emil-design-eng) | 1 (685) | adopt with notes | Points at a `choreograph` skill that isn't pinned |
+| [context7](#context7) | 8 (~560) | adopt with notes | Doc queries go to a hosted service, and the skill doesn't warn against pasting private code into them |
+| [caveman](#caveman) | 8 (~330) | adopt with notes | By upstream's own numbers `caveman` saves ~3% over "Answer concisely"; only `ultracave` saves much |
 
 ## superpowers
 obra/superpowers @ `22f0b46` · MIT
@@ -91,6 +93,21 @@ LemonFace0309/charles-skills @ `baf4272`, `charles-unslop` + `charles-polish` ·
 ## emil-design-eng
 emilkowalski/skills @ `64eb3de`, `skills/emil-design-eng` · MIT
 - A single Markdown file with no code. It refers to `../choreograph/SKILL.md` twice; that skill isn't in the pin, so the reference is dead. On invocation it replies only "I'm ready to help…" and waits.
+
+## context7
+upstash/context7 @ `b1e3611`, `skills/context7-mcp` + hosted MCP server · MIT
+- **What loads:** one Markdown skill (`context7-mcp`) and an HTTP MCP server, `https://mcp.context7.com/mcp?client=claude-code-plugin`. The `mcpServers` block sits in our marketplace entry, copied verbatim from upstream `plugins/claude/context7/.mcp.json` at the pinned SHA, so the URL changes only through a reviewed PR here. No hooks, no scripts, nothing runs locally.
+- **Data sent:** the library name and the free-text query the model writes, plus your Context7 OAuth token once you sign in (`/mcp` → Context7 → browser). The plugin doesn't read `CONTEXT7_API_KEY`; on a headless host use `ctx7 setup --claude` instead.
+- **Gap:** `context7-mcp` has no rule against putting secrets, customer data or proprietary code in the query. Its siblings `find-docs` and `context7-cli` do have that rule, but they run `npx ctx7@latest` (unpinned, fetched on every call), so they aren't listed. In client repos, keep lookups to generic library questions.
+- The skill triggers on any library or framework mention, so expect a doc lookup on most coding prompts. That's the point, but each one costs a round-trip and some context.
+
+## caveman
+JuliusBrussee/caveman @ `a192894`, `skills/` subset: `caveman`, `ultracave`, `megacave`, `caveman-help` · Apache-2.0 (since 3.0.0, see upstream `LICENSING.md`)
+- **Markdown only.** No scripts, no network. The voice drops back to plain prose for security warnings, irreversible actions, questions to you, and anything written outside chat (code, comments, commits, PRs, docs, memory), so it doesn't fight `senior-pr` or `project-docs`.
+- **Hooks left out on purpose.** Upstream's `plugin.json` (repo root, outside the pinned path) turns caveman on in **every** session by default, injects it into every subagent, tracks the mode on every prompt, records stats at session end, and nudges the model to set up a statusline. None of that loads here. Caveman is off until you type `/caveman`, and `/caveman status` answers `(not tracked by this host)`, a case the skill handles.
+- **Honest numbers** (upstream's own, `skills/caveman/README.md`; one run, ten prompts, output length only): `caveman` 3% fewer output tokens than a plain `Answer concisely.` control, inside the noise; `ultracave` 35%; `megacave` 9%. No quality claim. Treat `caveman` as a reading-style preference and `ultracave` as the one that saves tokens.
+- **Not in the subset:** `caveman-commit` and `caveman-review` overlap `senior-pr`. `caveman-compress` runs Python that sends your Markdown files to the Anthropic API. `caveman-setup` and the rest manage upstream's installer and runtime. `caveman-help` still lists the first three, so those references are dead.
+- Overlaps craft-core's `terse` output style. Pick one: `terse` for a whole project, `/caveman` for one session.
 
 ## Recommended settings
 These follow from the reviews. `skills add` applies all of them (see README > Safeguards), and `skills remove` takes them out again. They're listed here for anyone installing these plugins without the CLI.

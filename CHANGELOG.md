@@ -10,6 +10,9 @@ What changed for people who use `skills`. Newest first. Each version is a git ta
 - **test-integrity** (craft-core): tests that would catch a real bug (public behavior, real dependencies, independent expected values, a failing test before each fix, proof each test can fail). Failing tests get fixed in the code, never by skipping, loosening or special-casing the test. `check-test-diff.mjs` checks a branch for weakened tests and for code that special-cases test inputs.
 - **Test guard hook** (craft-core): before an edit or command that weakens tests (skip, `.only`, a deleted test or assertion, excluded tests or a lowered coverage threshold in config, a masked exit code, `--no-verify`), Claude asks you first. `CRAFT_TEST_GUARD=enforce` blocks instead, `warn` only tells Claude, `off` turns it off.
 - **incident-response** (ops): declare, set severity, assign roles, mitigate first, post status updates on a cadence, hand off, then write a blameless postmortem. `check-postmortem.mjs` validates it.
+- **context7** (third-party, Upstash, MIT): current, version-specific library docs through Context7's hosted MCP server, plus the `context7-mcp` skill that tells Claude when to use it. `skills add context7 --global`, then sign in once with `/mcp`. Your library name and question go to mcp.context7.com.
+- **caveman** (third-party, Julius Brussee, Apache-2.0), a subset: `/caveman`, `/ultracave`, `/megacave` and `/caveman-help`. Upstream's hooks are left out, so it never switches itself on: it's off until you type `/caveman`, and `stop caveman` ends it.
+- **[docs/playbook.md](docs/playbook.md)**: which skill to use when, with what to type, for a new project, joining an existing repo, an LLM feature, an incident, a refactor, shipping, and long sessions.
 - Manim-based task evals for figure-check and human-voice.
 - `SECURITY.md` and issue forms for skill misfires, CLI bugs and third-party plugins.
 

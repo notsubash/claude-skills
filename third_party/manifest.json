@@ -367,6 +367,64 @@
         "verdict": "adopt with notes",
         "details": "third_party/REVIEW.md#emil-design-eng"
       }
+    },
+    {
+      "name": "context7",
+      "upstream": "https://github.com/upstash/context7",
+      "path": "skills (context7-mcp only) + hosted MCP server URL from plugins/claude/context7/.mcp.json",
+      "sha": "b1e3611e32a8b1369ae526cacdf335ddfd6e5fbb",
+      "license": "MIT",
+      "bundles": [],
+      "scan": {
+        "files": 5,
+        "bytes": 22528,
+        "executable": 0
+      },
+      "hooks": [],
+      "scripts": [],
+      "network": "Yes: the MCP server is hosted at https://mcp.context7.com/mcp. When the model looks up docs it sends the library name and a free-text query, with your Context7 OAuth token after you sign in through /mcp.",
+      "note": "No code runs locally. The mcpServers block lives in our marketplace entry (copied verbatim from upstream plugins/claude/context7/.mcp.json at the pinned SHA), so the server URL can only change in a reviewed PR. context7-mcp has no rule against putting secrets or proprietary code in the query; find-docs and context7-cli do, but they run npx ctx7@latest (unpinned) and are not listed.",
+      "reviewed": {
+        "date": "2026-11-22",
+        "by": "Claude (Opus 5.5) for Subash Pandey; read in the main session, no subagents",
+        "method": "Every file under the pinned path read on a checkout of the pinned commit, plus the upstream Claude plugin (plugin.json, .mcp.json, README); nothing executed.",
+        "full_read": true,
+        "files_read": 8,
+        "lines_read_approx": 560,
+        "read_exceptions": [],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#context7"
+      }
+    },
+    {
+      "name": "caveman",
+      "upstream": "https://github.com/JuliusBrussee/caveman",
+      "path": "skills (caveman, ultracave, megacave, caveman-help only)",
+      "sha": "a192894723a8f47e7f504c7b5041967ff1f18e55",
+      "license": "Apache-2.0 (from 3.0.0; LICENSING.md)",
+      "bundles": [],
+      "scan": {
+        "files": 63,
+        "bytes": 301056,
+        "executable": 13
+      },
+      "hooks": [],
+      "scripts": [],
+      "network": "None. The listed skills are Markdown only.",
+      "note": "Upstream hooks (SessionStart auto-activation, SubagentStart, UserPromptSubmit mode tracker, SessionEnd stats, statusline setup nudge) live in the repo-root plugin.json, outside the pinned path, so they never load: caveman is off until /caveman. caveman-help lists caveman-commit, caveman-review and caveman-compress, which are not in the subset. Upstream measured caveman at 3% fewer output tokens than an \"Answer concisely.\" control (noise); ultracave 35%.",
+      "reviewed": {
+        "date": "2026-11-22",
+        "by": "Claude (Opus 5.5) for Subash Pandey; read in the main session, no subagents",
+        "method": "Every file of the four listed skills read on a checkout of the pinned commit, plus plugin.json and the SessionStart hook config to confirm what is left out; nothing executed.",
+        "full_read": true,
+        "files_read": 8,
+        "lines_read_approx": 330,
+        "read_exceptions": [
+          "The other 18 folders under skills/ (incl. caveman-compress, whose Python sends files to the Anthropic API) are downloaded with the pin but not listed, so Claude Code never loads them; they were scanned by skills vet, not read line by line"
+        ],
+        "verdict": "adopt with notes",
+        "details": "third_party/REVIEW.md#caveman"
+      }
     }
   ]
 }
