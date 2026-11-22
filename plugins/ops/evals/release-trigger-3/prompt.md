@@ -7,4 +7,4 @@ allowed_tools: ["Skill","Read","Glob","Grep"]
 env: {"EVAL_CRAFT_DEEPEN": "off"}
 ---
 
-The deploy we did 20 minutes ago doubled our error rate. Should we roll back, and how?
+The new billing flow is merged. Plan the production rollout: the stages, what we watch at each one, and what would make us roll back.

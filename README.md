@@ -183,12 +183,12 @@ Skills trigger on their own when what you type matches their description. These 
 | **security-gate** · craft-core | Scans the branch diff for secrets, vulnerable deps and risky paths; writes a CLEARED/BLOCKED report the push guard checks | "security check before I push", "clear this branch", "run the gate" |
 | **senior-pr** · craft-core | One focused conventional commit per logical change, and a PR body with what, why, risk and how it was tested | "commit this", "raise a PR", "give the PR body", "make this PR senior" |
 | **incident-response** · ops | Declare → severity → roles → mitigate first (rollback, flag off) → status updates on a cadence → handoff → blameless postmortem with sourced timeline and owned, ticketed actions. `check-postmortem.mjs` validates it | "checkout is down", "we're getting 500s since the deploy", "status page update", "write the postmortem" |
-| **bug-triage** · ops | Report → evidence → severity → minimal repro (bisect) → failing test → root-cause fix → data repair → reply | paste a stack trace, Sentry issue or ticket; "this is broken in prod" |
+| **bug-triage** · ops | Report → evidence → severity → minimal repro (bisect) → failing test → root-cause fix → data repair → reply | paste a bug report, Sentry issue or ticket; "this is broken in prod"; "triage these bugs". Not for local dev errors |
 | **observability** · ops | Wide events, golden signals, SLOs and error budgets, burn-rate alerts with runbooks | "add logging/monitoring", "set up Sentry/OpenTelemetry", "define SLOs", "too many alerts" |
 | **dep-upgrade** · ops | 7-day release-age cooldown, install scripts off, lockfile review, majors one at a time, compromise response | "update dependencies", "set up Renovate", "fix this CVE", "are we hit by the X compromise?" |
-| **release** · ops | Version, user-facing changelog, expand/contract migrations, progressive rollout with rollback triggers, flag cleanup | "cut a release", "write the changelog", "deploy to prod", "roll back", "hotfix" |
+| **release** · ops | Version, user-facing changelog, expand/contract migrations, progressive rollout with rollback triggers, flag cleanup | "cut a release", "write the changelog", "deploy to prod", "plan the rollout", "hotfix" |
 | **maintenance-routine** · ops | Weekly / monthly / quarterly checks → red-amber-green report with owned actions; can schedule itself | "weekly maintenance check", "health review", "schedule recurring checks" |
-| **ui-pipeline** · craft-web | Direction & critique → stageshow demos → charles-unslop → emil polish, verified with playwright screenshots | "redesign this page", "this UI looks generic / AI-made", "polish the animations" |
+| **ui-pipeline** · craft-web | Direction & critique → stageshow demos → charles-unslop → emil polish, verified with playwright screenshots | "redesign this page", "this UI looks generic / AI-made", "polish the settings page". Not for one-component fixes |
 | **oss-contribute** · oss | Fork + upstream, contribution rules, pick and scope an issue, test-first fix, PR in the project's conventions; teaches as it goes | "I forked X, want to contribute", "which issue should I take?" |
 | **human-voice** · writing | Drafts in your voice (video narration, replies, posts), every claim checked against the source | "make it sound like me", "reply to this comment", "answer this application question" |
 | **figure-check** · writing | Recomputes every number, label, axis and formula in code before you publish, reading the Manim scene source against what it draws | "check the numbers in this chart/video/post", "is this factually right?" |
@@ -251,7 +251,7 @@ Output turns colorless when piped, in CI, or with `NO_COLOR=1`. In a shell witho
 | Setting | Effect |
 |---|---|
 | `CRAFT_DEEPEN=off` | Turn off the first-prompt deepen hook everywhere. A prompt starting with `!raw` skips it for that session |
-| `CRAFT_SECURITY_GATE=warn` *(default)* · `enforce` · `off` | Push guard: warn when HEAD has no CLEARED report, block it, or stay silent |
+| `CRAFT_SECURITY_GATE=warn` *(default)* · `enforce` · `off` | Push guard: warn when HEAD has no CLEARED report and the branch touches sensitive files (auth, secrets, manifests and lockfiles, CI, infra); block any push without one; or stay silent |
 | `CRAFT_TEST_GUARD=ask` *(default)* · `enforce` · `warn` · `off` | Test guard: before an edit or command that weakens tests (skip, `.only`, deleted test or assertion, excluded tests or lowered coverage in config, `\|\| true` on a test run, `--no-verify`), ask you, block it, only tell Claude, or stay silent. Changed expected values and swallowed errors go through, but Claude is told to explain them |
 | Output style `craft-core:terse` | Short replies: answer first, one recommendation, never drops warnings. Pick it in `/config` → Output style, or `"outputStyle": "craft-core:terse"` |
 

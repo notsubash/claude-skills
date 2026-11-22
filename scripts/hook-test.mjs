@@ -104,5 +104,26 @@ const bad = spawnSync(process.execPath, [join(HOOKS, 'test-guard.mjs')], { input
 check('hook: bad input fails open', bad.status === 0 && bad.stdout === '');
 rmSync(tmp, { recursive: true, force: true });
 
+// Push guard, end to end in a throwaway repo: warn mode speaks only when the branch touches sensitive files.
+const repo = mkdtempSync(join(tmpdir(), 'push-guard-'));
+const g = (...args) => spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', '-c', 'commit.gpgsign=false', ...args], { cwd: repo, encoding: 'utf8' });
+const commit = (file, msg) => { writeFileSync(join(repo, file), msg); g('add', '-A'); g('commit', '-qm', msg); };
+g('init', '-q', '-b', 'main');
+commit('README.md', 'init');
+g('switch', '-qc', 'feat');
+const push = (mode) => {
+  const env = { ...process.env, CRAFT_SECURITY_GATE: mode || '' };
+  if (!mode) delete env.CRAFT_SECURITY_GATE;
+  const r = spawnSync(process.execPath, [join(HOOKS, 'push-guard.mjs')], { input: JSON.stringify({ cwd: repo, tool_input: { command: 'git push -u origin feat' } }), env, encoding: 'utf8' });
+  return r.stdout ? JSON.parse(r.stdout) : null;
+};
+commit('docs.md', 'docs only');
+check('push guard: docs-only branch is silent in warn mode', push() === null);
+check('push guard: enforce still blocks a docs-only branch', push('enforce')?.hookSpecificOutput?.permissionDecision === 'deny');
+commit('package.json', '{}');
+check('push guard: a manifest change warns', /No security clearance/.test(push()?.systemMessage || ''));
+check('push guard: off is silent', push('off') === null);
+rmSync(repo, { recursive: true, force: true });
+
 if (failed) { console.error(`\n${failed} failed, ${passed} passed`); process.exit(1); }
 console.log(`ok  ${passed} hook checks`);

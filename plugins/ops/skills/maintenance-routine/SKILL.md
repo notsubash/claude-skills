@@ -1,6 +1,6 @@
 ---
 name: maintenance-routine
-description: Run the recurring health check for a live app - weekly errors, SLO burn, dependency PRs past their cooldown, advisories, failed or flaky CI, stale PRs and support themes; monthly backup restore test, certificate and domain expiry, secret rotation, access review, stale feature flags and runtime end-of-life; quarterly alert pruning, SLO review and disaster-recovery drill - ending in a red, amber, green report with owned actions, and set it up to run on a schedule. Use when the user asks for a weekly or monthly maintenance check, an ops or health review, a maintenance checklist, keeping the app healthy after launch, or to schedule recurring checks. Not for fixing one specific bug (bug-triage) or doing the dependency updates themselves (dep-upgrade).
+description: Run the recurring health check for a live app - weekly, monthly and quarterly checks ending in a red, amber, green report with owned actions - and set it up to run on a schedule. Use when the user asks for a weekly or monthly maintenance check, an ops or health review, a maintenance checklist, or to schedule recurring checks. Not for fixing a specific bug (bug-triage) or doing the dependency updates themselves (dep-upgrade).
 ---
 
 # Maintenance routine
@@ -9,7 +9,7 @@ Production degrades quietly: certificates expire, backups stop working, flags pi
 
 ## 1. Look first
 
-Find the previous report (default `docs/ops/`) and carry over open actions. Find what tools exist: error tracker, dashboards, CI, the update bot, hosting and billing consoles, `gh`. If something can't be checked from here, list it as a manual step for the user rather than guessing.
+Run the cadence the user asked for (weekly by default). Find the previous report (default `docs/ops/`) and carry over open actions. Find what tools exist: error tracker, dashboards, CI, the update bot, hosting and billing consoles, `gh`. If something can't be checked from here, list it as a manual step for the user rather than guessing.
 
 ## 2. Weekly (30–60 minutes)
 
@@ -56,7 +56,7 @@ Keep it to one screen: findings and actions only, no restating what was healthy 
 
 ## 6. Make it recurring
 
-A routine that depends on memory stops in a month. Offer one:
+If it isn't scheduled yet, offer one:
 - **Claude Code `/schedule`**: a cloud routine that runs this skill weekly and writes the report.
 - **GitHub Actions `schedule:` cron** for the scriptable checks (certificate expiry, `npm audit`, stale PRs), opening an issue on findings.
 - A calendar slot for the manual steps (backup restore, access review).

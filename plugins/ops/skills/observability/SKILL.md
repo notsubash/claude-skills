@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Make production answerable - one wide structured event per request with build SHA, user and flags, error tracking tagged by release, the four golden signals per critical flow as histograms, SLOs with error budgets, and multi-window burn-rate alerts that page only on user-visible symptoms with a runbook. Use when the user asks to add logging, metrics, tracing, monitoring, alerts, dashboards, Sentry or OpenTelemetry, define SLOs or an error budget, reduce alert noise, or asks how they'd know if something broke in production. Not for debugging one specific bug (use bug-triage) or product analytics funnels (use product-lens for the metric choice).
+description: Make production answerable - one wide structured event per request, error tracking by release, golden signals per critical flow, SLOs with error budgets, and burn-rate alerts that page only on user-visible symptoms. Use when the user asks to add logging, metrics, tracing, monitoring, alerts, dashboards, Sentry or OpenTelemetry, define SLOs or an error budget, reduce alert noise, or asks how they'd know if production broke. Not for debugging one bug (bug-triage) or product analytics (product-lens).
 ---
 
 # Observability
@@ -9,7 +9,7 @@ Production should answer, from telemetry alone: is it broken for users, for whom
 
 ## 1. Look first
 
-What exists: logger, error tracker, metrics backend, tracing, uptime checks, alert routing. What are the 2–4 critical user journeys (sign-up, sign-in, the core action, checkout)? How much traffic? A low-traffic app needs synthetic checks, not fine-grained burn rates.
+What exists: logger, error tracker, metrics backend, tracing, uptime checks, alert routing. What are the 2–4 critical user journeys (sign-up, sign-in, the core action, checkout)? How much traffic? A low-traffic app needs synthetic checks, not fine-grained burn rates. Build the parts the user asked for and the traffic justifies; list the rest as suggestions.
 
 ## 2. One wide event per request
 
