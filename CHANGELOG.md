@@ -19,6 +19,11 @@ What changed for people who use `skills`. Newest first. Each version is a git ta
 
 ### Changed
 
+- **All own skills trimmed and de-conflicted.** Shorter descriptions (they load into every session), with "Not for" boundaries so each request has one owner: flaky tests → test-integrity, live outages and rollbacks → incident-response, build vs buy → architecture-decisions, PRODUCT.md → project-docs, local dev errors and one-component UI fixes → no skill. Removed duplicated principles and anti-pattern lists, the CLAUDE.md "Current state" line (it contradicted "nothing that changes weekly"), and a hard-coded Windows assumption.
+- **Skills stay in scope.** dep-upgrade, observability and release do the part you asked for and suggest the rest instead of reconfiguring the project; test-integrity and architecture-decisions don't add new test infrastructure or CI checks unasked.
+- **bug-triage** no longer quarantines flaky tests on its own (that contradicted test-integrity and the test guard).
+- **Push guard** in the default `warn` mode only speaks when the branch touches sensitive files. `enforce` still checks every push.
+
 - project-docs sets up the ADR folder and index, and hands each decision's content to architecture-decisions.
 - GitHub Actions are pinned to commit SHAs and kept current by Dependabot with a 7-day cooldown. CI fails on an unpinned action.
 
