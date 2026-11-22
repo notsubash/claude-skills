@@ -1,11 +1,13 @@
 ---
 name: dep-upgrade
-description: Keep dependencies current without importing a supply-chain attack - enforce a 7-day release-age cooldown in the package manager and the update bot, block install scripts, review lockfile diffs, batch patch and minor updates weekly, take majors one at a time from the changelog, triage security advisories by reachability, vet new packages, and respond when a dependency is compromised. Use when the user asks to update or upgrade dependencies or a framework, set up Dependabot or Renovate, fix npm audit or a CVE alert, harden installs after a supply-chain incident, evaluate adding a package, or check whether a compromised package affects them. Not for auditing the app's own code before a push (use security-gate) or general debugging.
+description: Update dependencies without importing a supply-chain attack - a 7-day release-age cooldown in the package manager and update bot, install scripts off, lockfile diffs reviewed, majors one at a time, advisories triaged by reachability, new packages vetted, compromised packages handled. Use when the user asks to update or upgrade dependencies or a framework, set up Dependabot or Renovate, fix npm audit or a CVE alert, harden installs, evaluate adding a package, or check exposure to a compromised package. Not for auditing the app's own code (security-gate).
 ---
 
 # Dependency updates
 
 Malicious package versions are usually detected and pulled within days: in one analysis of ten supply-chain attacks, eight had a window under a week. A malicious version nobody installs in its first week usually does no harm. So the policy is: **nothing younger than 7 days gets installed**, install scripts don't run by default, and every lockfile change is reviewed like code.
+
+Do the part the user asked for. If the cooldown or script controls below are missing, say so in one line and offer to add them; don't reconfigure the project unasked.
 
 ## 1. Look first
 

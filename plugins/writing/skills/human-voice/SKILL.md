@@ -1,6 +1,6 @@
 ---
 name: human-voice
-description: Write in the user's own voice instead of AI voice - application answers, project summaries, comment replies, social posts, Discord or Slack updates, bios - with several short drafts in different styles and every claim checked against the source. Use when the user asks to "make it human", "write it the way I write", humanise text, write multiple drafts, reply to comments, or answer an application or contest question.
+description: Write in the user's own voice instead of AI voice - application answers, project summaries, comment replies, social posts, Discord or Slack updates, bios - with every claim checked against the source. Use when the user asks to "make it human", write it the way they write, humanise text, draft a post or reply they'll publish under their name, or answer an application or contest question.
 ---
 
 # Human voice

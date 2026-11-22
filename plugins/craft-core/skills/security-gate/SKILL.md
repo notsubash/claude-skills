@@ -1,6 +1,6 @@
 ---
 name: security-gate
-description: Security clearance gate before code ships - scans the branch diff for secrets, vulnerable dependencies and risky code paths, then writes a CLEARED or BLOCKED verdict with evidence to .claude/security-gate/. Use before opening or merging a PR, before deploying or releasing, when the user asks for a security review, security audit, security check or "clearance", or when a push is blocked for lacking a clearance. Not for general code review.
+description: Security clearance for a branch before it ships - scans the diff for secrets, vulnerable dependencies and risky code paths, and writes a CLEARED or BLOCKED report with evidence to .claude/security-gate/. Use when the user asks for a security review, audit, check or clearance, when the push guard reports a missing or blocked clearance, or before shipping a diff that touches auth, secrets, input handling, dependencies or network code. Not for general code review.
 ---
 
 # Security clearance gate
@@ -60,4 +60,4 @@ Suggest adding `.claude/security-gate/` to `.gitignore` unless the team wants re
 
 ## The push guard
 
-The craft-core plugin ships a hook that runs on `git push` and `gh pr create`. If there's no report for the current HEAD, or the report says BLOCKED, it warns. With `CRAFT_SECURITY_GATE=enforce` set, it blocks instead. With `CRAFT_SECURITY_GATE=off`, it's silent.
+The craft-core push guard checks for this report on `git push` and `gh pr create` when the diff touches sensitive files (auth, secrets, manifests and lockfiles, CI, infra), and warns if it's missing or BLOCKED.

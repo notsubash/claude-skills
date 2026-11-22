@@ -1,6 +1,6 @@
 ---
 name: senior-pr
-description: Write commits and a pull request the way a senior engineer would - one focused commit per logical change with a conventional message, and a PR body that states what changed, why, the risk, and how it was tested. Use when the user asks to commit, raise or push a PR, write or fix a PR body or title, "give the PR body", write commit messages, or make the PR "senior". Not for reviewing someone else's PR.
+description: Write commits and pull requests the way a senior engineer would - one focused conventional commit per logical change, and a PR body covering what changed, why, the risk and how it was tested. Use when the user asks to commit, push, open or raise a PR, or write or fix a PR title, PR body or commit message. Not for reviewing someone else's PR.
 ---
 
 # Senior PR
@@ -9,7 +9,7 @@ A reviewer should understand the change, trust it, and know how to check it, wit
 
 ## 1. Look before writing
 
-Run these and read the output. Don't write from memory of the session.
+Read the real diff; don't write from memory of the session.
 
 ```bash
 git status --short
@@ -18,20 +18,20 @@ git diff --stat <base>...HEAD
 git diff <base>...HEAD
 ```
 
-`<base>` is the branch the PR targets (usually `main`; check `gh repo view --json defaultBranchRef`). Read `CONTRIBUTING.md`, `.github/pull_request_template.md` and the last 5 merged PRs (`gh pr list --state merged --limit 5`) if they exist. **The repo's conventions beat this skill.**
+`<base>` is the branch the PR targets (usually `main`; check `gh repo view --json defaultBranchRef`). For a PR, also read `CONTRIBUTING.md`, `.github/pull_request_template.md` and the last 5 merged PRs (`gh pr list --state merged --limit 5`) if they exist. **The repo's conventions beat this skill.**
 
 ## 2. Commits
 
 - One commit per logical change. It builds and passes tests on its own.
 - Conventional commits unless the repo uses something else: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `perf:`. Add a scope when the repo uses scopes: `fix(sync): ...`.
-- Subject: imperative, at most 72 characters, no trailing period. Say what the change does, not what you did ("fix: keep free-email leads in CRM sync", not "fixed bug").
+- Subject: imperative, at most 72 characters, no trailing period. Say what the change does ("fix: keep free-email leads in CRM sync", not "fixed bug").
 - Body, when the why isn't obvious: the problem, the cause, and why this fix. Wrap at 72 characters.
-- Review fixes go in as `git commit --fixup=<sha>` when the repo squashes, so history stays one-commit-per-change.
+- Review fixes: new commits, or `git commit --fixup=<sha>` plus autosquash when the repo keeps per-commit history.
 - Commit only when the user asked. Never commit secrets, `.env` files or generated output. Never skip hooks.
 
 ## 3. PR title
 
-Same rules as a commit subject. It describes the change, never the process. **Never put internal planning words in a title or body**: phase, task, ticket IDs from a private plan, gate, sprint, "as discussed". A stranger should understand it.
+Same rules as a commit subject. It describes the change, never the process. **No internal planning words** in the title or body: phase, task, gate, sprint, ticket IDs from a private plan, "as discussed". A stranger should understand it.
 
 ## 4. PR body
 
@@ -53,17 +53,15 @@ What could break, who is affected, migrations, config or env changes, and how to
 Write "Low: <reason>" when that's true. Don't leave the section out.
 
 ## Testing
-The exact commands you ran and what they showed. New tests added and what each one proves.
+The exact commands you ran and what they showed. New tests and what each one proves.
 Manual checks, with screenshots for UI changes. Anything you did not test, said plainly.
 ```
 
-Rules:
-- Every claim in the body is something you checked in this session. If you didn't run the tests, say so.
+- Every claim is something you checked in this session. If you didn't run the tests, say so.
 - Keep it short. A 3-line fix gets a 6-line body.
-- For an open-source repo, link the issue, follow its PR checklist, and thank no one in the body.
 
 ## 5. Hand it over
 
-When the user asks for the body, give it **as raw Markdown inside a fenced block** so it pastes cleanly. When asked to push or open the PR: push the branch, then `gh pr create --title ... --body-file <file>`. Report the PR URL.
+When the user asks for the body, give it **as raw Markdown inside a fenced block**. When asked to push or open the PR: push the branch, then `gh pr create --title ... --body-file <file>`, and report the PR URL.
 
-If the `security-gate` skill (craft-core) is installed and the change touches auth, input handling, secrets, dependencies or network code, run `security-gate` before opening the PR and mention its verdict under Risk.
+If `security-gate` is installed and the diff touches auth, input handling, secrets, dependencies or network code, run it before opening the PR and put its verdict under Risk.

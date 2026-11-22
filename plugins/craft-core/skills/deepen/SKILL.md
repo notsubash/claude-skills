@@ -22,4 +22,4 @@ Finish with one line asking the user whether to run the rewritten prompt, edit i
 
 ## Automatic mode
 
-The craft-core plugin's `UserPromptSubmit` hook applies this to the first substantial prompt of every session. To turn it off for one session, start the prompt with `!raw`. To turn it off everywhere, set `CRAFT_DEEPEN=off` in your environment or in the `env` block of your settings.
+The craft-core `UserPromptSubmit` hook applies this to the first substantial prompt of each session. `!raw` at the start of a prompt skips it for the session; `CRAFT_DEEPEN=off` turns it off.

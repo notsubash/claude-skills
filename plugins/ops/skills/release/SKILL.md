@@ -1,6 +1,6 @@
 ---
 name: release
-description: Ship a release safely after the PR is merged - version it, write a user-facing changelog, check migrations are backward compatible, deploy as an immutable artifact through progressive rollout with predefined rollback triggers, watch errors and SLOs against the previous release, tag it, handle hotfixes, and schedule feature-flag cleanup. Use when the user asks to cut, tag or publish a release, bump the version, write a changelog or release notes, deploy to production, roll back, ship a hotfix, set up release-please or changesets, or plan a rollout or flag cleanup. Not for writing commits or the PR itself (use senior-pr) or for dependency updates (use dep-upgrade).
+description: Ship a merged change to users safely - version, user-facing changelog, backward-compatible migrations, one artifact promoted through a progressive rollout with rollback triggers set in advance, tag, hotfixes and flag cleanup. Use when the user asks to cut, tag or publish a release, bump the version, write a changelog or release notes, deploy to production, ship a hotfix, set up release-please or changesets, or plan a rollout. Not for commits or the PR (senior-pr), dependency updates (dep-upgrade), or rolling back during an outage (incident-response).
 ---
 
 # Release
@@ -9,7 +9,7 @@ Deploying puts code on servers; releasing exposes it to users. Keep them separat
 
 ## 1. Look first
 
-How releases happen today: CI/CD pipeline, hosting, artifact type, existing tags and versions, `CHANGELOG.md`, release tooling (release-please, changesets, semantic-release), feature-flag system, migration tool. Follow the existing process; improve one thing at a time.
+How releases happen today: CI/CD pipeline, hosting, artifact type, existing tags and versions, `CHANGELOG.md`, release tooling (release-please, changesets, semantic-release), feature-flag system, migration tool. Follow the existing process and skip steps that don't fit the project (a library has no canary; a static site has no migrations). Suggest improvements; don't make them unasked.
 
 ## 2. Version
 
